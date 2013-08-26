@@ -53,7 +53,7 @@ function Plane() {
 	var n = 20;
 	var geometry = new THREE.PlaneGeometry(n, n, n, n);
 	var material = new THREE.MeshBasicMaterial(
-		{ color: 0x00ff00, wireframe: false });
+		{ color: 0x00ff00, wireframe: true });
 	var plane = new THREE.Mesh(geometry, material);
 	plane.rotation.x -= Math.PI / 2;
 
