@@ -90,37 +90,74 @@ function frame() {
 
 	// FPS-style camera
 
+	var fps = false;
+	if (fps) {
+		if (keys.left) {
+			camera.rotation.y += turnSpeed;
+		}
+
+		if (keys.right) {
+			camera.rotation.y -= turnSpeed;
+		}
+
+		if (keys.up) {
+			camera.rotation.x += turnSpeed;
+		}
+
+		if (keys.down) {
+			camera.rotation.x -= turnSpeed;
+		}
+
+		if (keys.a) {
+			camera.position.x -= moveSpeed;
+		}
+
+		if (keys.d) {
+			camera.position.x += moveSpeed;
+		}
+
+		if (keys.w) {
+			camera.position.z -= moveSpeed;
+		}
+
+		if (keys.s) {
+			camera.position.z += moveSpeed;
+		}
+	}
+
 	if (keys.left) {
-		camera.rotation.y += turnSpeed;
+		ship.rotation.y += turnSpeed;
 	}
 
 	if (keys.right) {
-		camera.rotation.y -= turnSpeed;
+		ship.rotation.y -= turnSpeed;
 	}
 
 	if (keys.up) {
-		camera.rotation.x += turnSpeed;
+		ship.rotation.x += turnSpeed;
 	}
 
 	if (keys.down) {
-		camera.rotation.x -= turnSpeed;
+		ship.rotation.x -= turnSpeed;
 	}
 
 	if (keys.a) {
-		camera.position.x -= moveSpeed;
+		ship.position.x -= moveSpeed;
 	}
 
 	if (keys.d) {
-		camera.position.x += moveSpeed;
+		ship.position.x += moveSpeed;
 	}
 
 	if (keys.w) {
-		camera.position.z -= moveSpeed;
+		ship.position.z -= moveSpeed;
 	}
 
 	if (keys.s) {
-		camera.position.z += moveSpeed;
+		ship.position.z += moveSpeed;
 	}
+
+	camera.lookAt(ship.position);
 
 	// render
 	renderer.render(scene, camera);
