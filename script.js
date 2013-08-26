@@ -69,9 +69,9 @@ function Ship() {
 		geometry.vertices.push(new THREE.Vector3(x, y, z));
 	}
 
-	vec(0, 0, 0);
+	vec(0, 0, -2);
+	vec(-1, 0, 0);
 	vec(0, 1, 0);
-	vec(1, 1, 0);
 	vec(1, 0, 0);
 
 	function face(a, b, c) {
@@ -80,6 +80,8 @@ function Ship() {
 
 	face(0, 1, 2);
 	face(0, 2, 3);
+	face(0, 3, 1);
+	face(3, 2, 1);
 
 	var material = new THREE.MeshBasicMaterial(
 		{ color: 0xff0000, wireframe: true });
