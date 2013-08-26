@@ -10,8 +10,7 @@ renderer.setSize(width, height);
 
 scene.add(camera);
 
-camera.position.z = 15;
-camera.position.y = 2;
+camera.position = { x: -4, y: 2, z: 5 };
 
 document.body.appendChild(renderer.domElement);
 
@@ -54,9 +53,9 @@ function Plane() {
 	var n = 20;
 	var geometry = new THREE.PlaneGeometry(n, n, n, n);
 	var material = new THREE.MeshBasicMaterial(
-		{ color: 0x00ff00, wireframe: true });
+		{ color: 0x00ff00, wireframe: false });
 	var plane = new THREE.Mesh(geometry, material);
-	plane.rotation.x += Math.PI / 2;
+	plane.rotation.x -= Math.PI / 2;
 
 	scene.add(plane);
 
@@ -87,7 +86,9 @@ function Ship() {
 		{ color: 0xff0000, wireframe: true });
 	var ship = new THREE.Mesh(geometry, material);
 
-	ship.position.y = 0.5;
+	ship.position.y = 0.01;
+	console.log(ship.rotation.order);
+	ship.rotation.order = 'YXZ';
 	scene.add(ship);
 
 	return ship;
@@ -152,11 +153,11 @@ function frame() {
 	}
 
 	if (keys.up) {
-		ship.rotation.x += turnSpeed;
+		ship.rotation.x -= turnSpeed;
 	}
 
 	if (keys.down) {
-		ship.rotation.x -= turnSpeed;
+		ship.rotation.x += turnSpeed;
 	}
 
 	if (keys.a) {
@@ -173,6 +174,14 @@ function frame() {
 
 	if (keys.s) {
 		ship.position.z += moveSpeed;
+	}
+
+	if (keys.q) {
+		ship.rotation.z += turnSpeed;
+	}
+
+	if (keys.e) {
+		ship.rotation.z -= turnSpeed;
 	}
 
 	camera.lookAt(ship.position);
