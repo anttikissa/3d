@@ -1,0 +1,12 @@
+{
+  "name": "3d",
+  "repo": "anttisykari/3d",
+  "description": "3d test",
+  "version": "0.0.1",
+  "keywords": [],
+  "dependencies": {
+    "component/keyname": "*"
+  },
+  "development": {},
+  "license": "MIT"
+}
