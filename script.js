@@ -64,7 +64,23 @@ function Plane() {
 }
 
 function Ship() {
-	var geometry = new THREE.CubeGeometry(1, 1, 1);
+	var geometry = new THREE.Geometry();
+	function vec(x, y, z) {
+		geometry.vertices.push(new THREE.Vector3(x, y, z));
+	}
+
+	vec(0, 0, 0);
+	vec(0, 1, 0);
+	vec(1, 1, 0);
+	vec(1, 0, 0);
+
+	function face(a, b, c) {
+		geometry.faces.push(new THREE.Face3(a, b, c));
+	}
+
+	face(0, 1, 2);
+	face(0, 2, 3);
+
 	var material = new THREE.MeshBasicMaterial(
 		{ color: 0xff0000, wireframe: true });
 	var ship = new THREE.Mesh(geometry, material);
