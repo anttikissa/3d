@@ -20,19 +20,27 @@ document.body.appendChild(renderer.domElement);
 //// Keyboard handling
 
 var keyname = require('keyname');
+var keynameOrLetter = function(keyCode) {
+	// Map 65-90 to [a-z]
+	if (65 <= keyCode && keyCode <= 90) {
+		return String.fromCharCode(keyCode + 32);
+	}
+	return keyname(keyCode);
+}
 
 // Keys that are down.
 var keys = {};
 
 window.onkeyup = function(e) {
-	var key = keyname(e.keyCode);
+	var key = keynameOrLetter(e.keyCode);
 	if (key) {
 		keys[key] = false;
 	}
 }
 
 window.onkeydown = function(e) {
-	var key = keyname(e.keyCode);
+	var key = keynameOrLetter(e.keyCode);
+	console.log('down', key);
 	if (key) {
 		keys[key] = true;
 	}
@@ -70,14 +78,18 @@ function Ship() {
 var plane = Plane();
 var ship = Ship();
 
+
+
 //// Camera
 
 var turnSpeed = 0.02;
+var moveSpeed = 0.08;
 
 function frame() {
 	requestAnimationFrame(frame);
 
 	// FPS-style camera
+
 	if (keys.left) {
 		camera.rotation.y += turnSpeed;
 	}
@@ -92,6 +104,22 @@ function frame() {
 
 	if (keys.down) {
 		camera.rotation.x -= turnSpeed;
+	}
+
+	if (keys.a) {
+		camera.position.x -= moveSpeed;
+	}
+
+	if (keys.d) {
+		camera.position.x += moveSpeed;
+	}
+
+	if (keys.w) {
+		camera.position.z -= moveSpeed;
+	}
+
+	if (keys.s) {
+		camera.position.z += moveSpeed;
 	}
 
 	// render
