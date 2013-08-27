@@ -72,7 +72,7 @@ function Plane() {
 	var n = 40;
 	var geometry = new THREE.CubeGeometry(n, n, 2, n, n); // Three.js geometry
 	var material = new THREE.MeshLambertMaterial(
-		{ color: 0x00ff00, wireframe: true });
+		{ color: 0x00ff00, wireframe: wireframe });
 	var plane = new Physijs.BoxMesh( // Physijs mesh
 		geometry,
 		Physijs.createMaterial( // Physijs material
@@ -164,6 +164,24 @@ function Ship() {
 var plane = Plane();
 var ship = Ship();
 
+for (var i = 0; i < 10; i++) {
+	var material = Physijs.createMaterial(
+		new THREE.MeshLambertMaterial({ color: 0xff0000 }),
+		.8, // high friction
+		.4 // low restitution
+	);
+
+	var box = new Physijs.BoxMesh(
+		new THREE.CubeGeometry(2, 2, 2),
+		material,
+		0.2);
+
+	box.position.x = 30 * (Math.random() - 0.5);
+	box.position.y = 1.4 + Math.random() * 0.5;
+	box.position.z = 30 * (Math.random() - 0.5);
+
+	scene.add(box);
+}
 
 
 //// Light
