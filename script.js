@@ -1,12 +1,25 @@
+// Physijs
+
+Physijs.scripts.worker = 'js/physijs_worker.js';
+Physijs.scripts.ammo = 'ammo.js'
+
 //// Basic three.js init
 
 var width = window.innerWidth - 10;
 var height = window.innerHeight - 10;
 
-var scene = new THREE.Scene();
+//var scene = new THREE.Scene();
+
+var scene = new Physijs.Scene(); // create Physijs scene
+scene.setGravity(new THREE.Vector3( 0, -50, 0 )); // set gravity
+scene.addEventListener('update', function() {
+	  scene.simulate(); // simulate on every scene update
+});
+
 var renderer = new THREE.WebGLRenderer(); 
 renderer.shadowMapEnabled = true;
 renderer.setSize(width, height);
+renderer.setClearColor(0x444444, 1);
 
 var camera = new THREE.PerspectiveCamera(75, width / height, 1, 10000);
 scene.add(camera);
@@ -57,10 +70,20 @@ window.onkeydown = function(e) {
 
 function Plane() {
 	var n = 20;
-	var geometry = new THREE.PlaneGeometry(n, n, n, n);
+	var geometry = new THREE.CubeGeometry(n, n, 2, n, n); // Three.js geometry
 	var material = new THREE.MeshLambertMaterial(
 		{ color: 0x00ff00, wireframe: wireframe });
-	var plane = new THREE.Mesh(geometry, material);
+	var plane = new Physijs.BoxMesh( // Physijs mesh
+		geometry,
+		Physijs.createMaterial( // Physijs material
+			material,
+			.7, // friction
+			.1 // restitution
+		),
+		0 // weight, 0 is for zero gravity
+	);
+
+	plane.position.y -= 1;
 	plane.rotation.x -= Math.PI / 2;
 	plane.receiveShadow = true;
 
@@ -110,7 +133,15 @@ function Ship() {
 		depthWrite: false  */
 	});
 
-	var ship = new THREE.Mesh(geometry, material);
+//	var ship = new THREE.Mesh(geometry, material);
+	var ship = new Physijs.ConvexMesh(
+		geometry,
+		Physijs.createMaterial(
+			material,
+			.7,
+			0),
+		1
+	);
 
 	// Works but shadows don't work afterwards
 //	var wireframeMaterial = new THREE.MeshBasicMaterial({
@@ -119,8 +150,7 @@ function Ship() {
 //	var ship = THREE.SceneUtils.createMultiMaterialObject(
 //		geometry, [material, wireframeMaterial]);
 
-	ship.position.y = shipGroundY + 0.01;
-	console.log(ship.rotation.order);
+	ship.position.y = 4 + shipGroundY + 0.01;
 	ship.rotation.order = 'YXZ';
 
 	ship.velocity = new THREE.Vector3(0, 0, 0);
@@ -253,16 +283,17 @@ function frame() {
 	}
 
 	if (keys.space) {
-		ship.velocity.y += accel;
+//		ship.velocity.y += accel;
+		ship.applyCentralImpulse(new THREE.Vector3(0, 1, 0));
 	}
 
-	ship.velocity.y -= g;
-	ship.position.add(ship.velocity);
+//	ship.velocity.y -= g;
+//	ship.position.add(ship.velocity);
 
-	if (ship.position.y < shipGroundY) {
-		ship.position.y = shipGroundY;
-		ship.velocity.set(0, 0, 0);
-	}
+//	if (ship.position.y < shipGroundY) {
+//		ship.position.y = shipGroundY;
+//		ship.velocity.set(0, 0, 0);
+//	}
 
 	camera.lookAt(ship.position);
 
@@ -271,4 +302,5 @@ function frame() {
 }
 
 frame();
+scene.simulate();
 
