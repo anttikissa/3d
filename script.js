@@ -16,6 +16,12 @@ document.body.appendChild(renderer.domElement);
 
 
 
+//// Misc config
+
+var wireframe = false;
+
+
+
 //// Keyboard handling
 
 var keyname = require('keyname');
@@ -39,7 +45,6 @@ window.onkeyup = function(e) {
 
 window.onkeydown = function(e) {
 	var key = keynameOrLetter(e.keyCode);
-	console.log('down', key);
 	if (key) {
 		keys[key] = true;
 	}
@@ -53,7 +58,7 @@ function Plane() {
 	var n = 20;
 	var geometry = new THREE.PlaneGeometry(n, n, n, n);
 	var material = new THREE.MeshBasicMaterial(
-		{ color: 0x00ff00, wireframe: true });
+		{ color: 0x00ff00, wireframe: wireframe });
 	var plane = new THREE.Mesh(geometry, material);
 	plane.rotation.x -= Math.PI / 2;
 
@@ -62,15 +67,25 @@ function Plane() {
 	return plane;
 }
 
+// The position where ship is on the ground
+var shipGroundY = 0.3;
+
 function Ship() {
 	var geometry = new THREE.Geometry();
+
+	var midpoint = [0, .2, -.6];
+
 	function vec(x, y, z) {
-		geometry.vertices.push(new THREE.Vector3(x, y, z));
+		geometry.vertices.push(
+				new THREE.Vector3(
+					x - midpoint[0],
+					y - midpoint[1],
+					z - midpoint[2]));
 	}
 
 	vec(0, 0, -2);
 	vec(-1, 0, 0);
-	vec(0, 1, 0);
+	vec(0, .6, 0);
 	vec(1, 0, 0);
 
 	function face(a, b, c) {
@@ -83,12 +98,15 @@ function Ship() {
 	face(3, 2, 1);
 
 	var material = new THREE.MeshBasicMaterial(
-		{ color: 0xff0000, wireframe: true });
+		{ color: 0xff0000, wireframe: wireframe });
 	var ship = new THREE.Mesh(geometry, material);
 
-	ship.position.y = 0.01;
+	ship.position.y = shipGroundY + 0.01;
 	console.log(ship.rotation.order);
 	ship.rotation.order = 'YXZ';
+
+	ship.velocity = new THREE.Vector3(0, 0, 0);
+
 	scene.add(ship);
 
 	return ship;
@@ -182,6 +200,18 @@ function frame() {
 
 	if (keys.e) {
 		ship.rotation.z -= turnSpeed;
+	}
+
+	if (keys.space) {
+		ship.velocity.y += 0.1;
+	}
+
+	ship.velocity.y += -0.05;
+	ship.position.add(ship.velocity);
+
+	if (ship.position.y < shipGroundY) {
+		ship.position.y = shipGroundY;
+		ship.velocity.set(0, 0, 0);
 	}
 
 	camera.lookAt(ship.position);
