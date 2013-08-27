@@ -12,9 +12,9 @@ var height = window.innerHeight - 10;
 
 var scene = new Physijs.Scene(); // create Physijs scene
 scene.setGravity(new THREE.Vector3( 0, -50, 0 )); // set gravity
-scene.addEventListener('update', function() {
-	  scene.simulate(); // simulate on every scene update
-});
+//scene.addEventListener('update', function() {
+//	  scene.simulate(); // simulate on every scene update
+//});
 
 var renderer = new THREE.WebGLRenderer(); 
 renderer.shadowMapEnabled = true;
@@ -69,10 +69,10 @@ window.onkeydown = function(e) {
 //// Objects
 
 function Plane() {
-	var n = 20;
+	var n = 40;
 	var geometry = new THREE.CubeGeometry(n, n, 2, n, n); // Three.js geometry
 	var material = new THREE.MeshLambertMaterial(
-		{ color: 0x00ff00, wireframe: wireframe });
+		{ color: 0x00ff00, wireframe: true });
 	var plane = new Physijs.BoxMesh( // Physijs mesh
 		geometry,
 		Physijs.createMaterial( // Physijs material
@@ -150,7 +150,7 @@ function Ship() {
 //	var ship = THREE.SceneUtils.createMultiMaterialObject(
 //		geometry, [material, wireframeMaterial]);
 
-	ship.position.y = 4 + shipGroundY + 0.01;
+	ship.position.y = 2 + shipGroundY + 0.01;
 	ship.rotation.order = 'YXZ';
 
 	ship.velocity = new THREE.Vector3(0, 0, 0);
@@ -205,87 +205,68 @@ var g = 0.02;
 function frame() {
 	requestAnimationFrame(frame);
 
-	// FPS-style camera
-
-	var fps = false;
-	if (fps) {
-		if (keys.left) {
-			camera.rotation.y += turnSpeed;
-		}
-
-		if (keys.right) {
-			camera.rotation.y -= turnSpeed;
-		}
-
-		if (keys.up) {
-			camera.rotation.x += turnSpeed;
-		}
-
-		if (keys.down) {
-			camera.rotation.x -= turnSpeed;
-		}
-
-		if (keys.a) {
-			camera.position.x -= moveSpeed;
-		}
-
-		if (keys.d) {
-			camera.position.x += moveSpeed;
-		}
-
-		if (keys.w) {
-			camera.position.z -= moveSpeed;
-		}
-
-		if (keys.s) {
-			camera.position.z += moveSpeed;
-		}
-	}
-
 	if (keys.left) {
 		ship.rotation.y += turnSpeed;
+		ship.__dirtyRotation = true;
 	}
 
 	if (keys.right) {
 		ship.rotation.y -= turnSpeed;
+		ship.__dirtyRotation = true;
 	}
 
 	if (keys.up) {
 		ship.rotation.x -= turnSpeed;
+		ship.__dirtyRotation = true;
 	}
 
 	if (keys.down) {
 		ship.rotation.x += turnSpeed;
-	}
-
-	if (keys.a) {
-		ship.position.x -= moveSpeed;
-	}
-
-	if (keys.d) {
-		ship.position.x += moveSpeed;
-	}
-
-	if (keys.w) {
-		ship.position.z -= moveSpeed;
-	}
-
-	if (keys.s) {
-		ship.position.z += moveSpeed;
+		ship.__dirtyRotation = true;
 	}
 
 	if (keys.q) {
 		ship.rotation.z += turnSpeed;
+		ship.__dirtyRotation = true;
 	}
 
 	if (keys.e) {
 		ship.rotation.z -= turnSpeed;
+		ship.__dirtyRotation = true;
+	}
+
+	var rot = new THREE.Matrix4();
+	rot.makeRotationFromEuler(ship.rotation);
+
+	if (keys.a) {
+		ship.position.x -= moveSpeed;
+		ship.__dirtyPosition = true;
+	}
+
+	if (keys.d) {
+		ship.position.x += moveSpeed;
+		ship.__dirtyPosition = true;
+	}
+
+	if (keys.w) {
+		ship.position.z -= moveSpeed;
+		ship.__dirtyPosition = true;
+	}
+
+	if (keys.s) {
+		ship.position.z += moveSpeed;
+		ship.__dirtyPosition = true;
 	}
 
 	if (keys.space) {
-//		ship.velocity.y += accel;
-		ship.applyCentralImpulse(new THREE.Vector3(0, 1, 0));
+		var els = rot.elements;
+//		var right = [els[0], els[1], els[2]];
+		var up = new THREE.Vector3(els[4], els[5], els[6]);
+//		var z = [els[8], els[9], els[10]];
+		ship.applyCentralImpulse(up.multiplyScalar(0.9));
 	}
+
+	scene.simulate();
 
 //	ship.velocity.y -= g;
 //	ship.position.add(ship.velocity);
@@ -295,6 +276,11 @@ function frame() {
 //		ship.velocity.set(0, 0, 0);
 //	}
 
+	camera.position = {
+		x: ship.position.x,
+		y: ship.position.y + 4,
+		z: ship.position.z + 10
+	}
 	camera.lookAt(ship.position);
 
 	// render
