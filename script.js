@@ -109,7 +109,15 @@ function Ship() {
 		transparent: true, 
 		depthWrite: false  */
 	});
+
 	var ship = new THREE.Mesh(geometry, material);
+
+	// Works but shadows don't work afterwards
+//	var wireframeMaterial = new THREE.MeshBasicMaterial({
+//		color: 0x888888, wireframe: true, wireframeLinewidth: 3
+//	});
+//	var ship = THREE.SceneUtils.createMultiMaterialObject(
+//		geometry, [material, wireframeMaterial]);
 
 	ship.position.y = shipGroundY + 0.01;
 	console.log(ship.rotation.order);
