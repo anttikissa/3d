@@ -4,13 +4,14 @@ var width = window.innerWidth - 10;
 var height = window.innerHeight - 10;
 
 var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
 var renderer = new THREE.WebGLRenderer(); 
+renderer.shadowMapEnabled = true;
 renderer.setSize(width, height);
 
+var camera = new THREE.PerspectiveCamera(75, width / height, 1, 10000);
 scene.add(camera);
-
-camera.position = { x: -4, y: 2, z: 5 };
+camera.position = { x: -5, y: 5, z: 5 };
+camera.lookAt(scene.position);
 
 document.body.appendChild(renderer.domElement);
 
@@ -61,6 +62,7 @@ function Plane() {
 		{ color: 0x00ff00, wireframe: wireframe });
 	var plane = new THREE.Mesh(geometry, material);
 	plane.rotation.x -= Math.PI / 2;
+	plane.receiveShadow = true;
 
 	scene.add(plane);
 
@@ -68,11 +70,10 @@ function Plane() {
 }
 
 // The position where ship is on the ground
-var shipGroundY = 0.9;
+var shipGroundY = 0.3;
 
 function Ship() {
 	var geometry = new THREE.Geometry();
-//	var geometry = new THREE.CubeGeometry(1,1,1);
 
 	var midpoint = [0, .2, -.6];
 
@@ -100,8 +101,14 @@ function Ship() {
 
 	geometry.computeFaceNormals();
 
-	var material = new THREE.MeshPhongMaterial(
-		{ color: 0xff0000, wireframe: wireframe });
+	var material = new THREE.MeshPhongMaterial({
+		color: 0x333333, wireframe: wireframe
+		/* uncomment for transparency */
+		/*
+		opacity: 0.6, 
+		transparent: true, 
+		depthWrite: false  */
+	});
 	var ship = new THREE.Mesh(geometry, material);
 
 	ship.position.y = shipGroundY + 0.01;
@@ -110,6 +117,7 @@ function Ship() {
 
 	ship.velocity = new THREE.Vector3(0, 0, 0);
 
+	ship.castShadow = true;
 	scene.add(ship);
 
 	return ship;
@@ -123,28 +131,25 @@ var ship = Ship();
 //// Light
 
 function Light() {
-	var light = new THREE.SpotLight(0xffffff);
-	light.position.set(-3, 5, 5);
+	light = new THREE.DirectionalLight(0xFFFFFF);
+	light.position.set(0, 100, 0);
+	light.target.position.set(0, 0, 0);
 	light.castShadow = true;
 
 	light.shadowMapWidth = 1024;
 	light.shadowMapHeight = 1024;
-	light.shadowCameraNear = 500;
-	light.shadowCameraFar = 4000;
-	light.shadowCameraFov = 30;
+	light.shadowCameraNear = 0.1;
+	light.shadowCameraFar = 110;
+	light.shadowCameraFov = 50;
 
-	/*
-	var light = new THREE.DirectionalLight(0xffffff, 0.8);
-	light.shadowCameraRight     =  5;
-	light.shadowCameraLeft     = -5;
-	light.shadowCameraTop      =  5;
-	light.shadowCameraBottom   = -5;
-	*/
+	light.shadowCameraLeft = -10;
+	light.shadowCameraRight = 10;
+	light.shadowCameraTop = 10;
+	light.shadowCameraBottom = -10;
 
-	light.shadowCameraVisible = true;
-
+	// debug
+//	light.shadowCameraVisible = true;
 	scene.add(light);
-
 	return light;
 }
 
@@ -152,18 +157,12 @@ var light = Light();
 
 
 
-//// Shadows
-
-renderer.shadowMapEnabled = true;
-plane.receiveShadow = true;
-ship.castShadow = true;
-
-
-
 //// Camera
 
 var turnSpeed = 0.02;
 var moveSpeed = 0.08;
+var accel = 0.05;
+var g = 0.02;
 
 function frame() {
 	requestAnimationFrame(frame);
@@ -246,10 +245,10 @@ function frame() {
 	}
 
 	if (keys.space) {
-		ship.velocity.y += 0.1;
+		ship.velocity.y += accel;
 	}
 
-	ship.velocity.y += -0.05;
+	ship.velocity.y -= g;
 	ship.position.add(ship.velocity);
 
 	if (ship.position.y < shipGroundY) {
