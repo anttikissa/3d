@@ -8,6 +8,8 @@
     "component/keyname": "*",
     "cvdlab/three": "*"
   },
+  "main": "index.js",
+  "scripts": ["index.js", "js/ShipController.js"],
   "development": {},
   "license": "MIT"
 }

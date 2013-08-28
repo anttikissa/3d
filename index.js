@@ -1,5 +1,4 @@
 var THREE = require('three');
-console.log('script');
 
 
 
@@ -15,7 +14,7 @@ renderer.shadowMapEnabled = true;
 renderer.setSize(width, height);
 renderer.setClearColor(0x444444, 1);
 
-var camera = new THREE.PerspectiveCamera(75, width / height, 1, 10000);
+var camera = new THREE.PerspectiveCamera(60, width / height, 1, 10000);
 scene.add(camera);
 camera.position = { x: -5, y: 5, z: 5 };
 camera.lookAt(scene.position);
@@ -79,11 +78,11 @@ function Plane() {
 	return plane;
 }
 
-// The position where ship is on the ground
-var shipGroundY = 0.3;
-
 function Ship() {
 	var geometry = new THREE.Geometry();
+
+	// The position where ship is on the ground
+	var shipGroundY = 0.3;
 
 	// Where center of gravity is supposed to be
 	var midpoint = [0, .2, -.6];
@@ -117,15 +116,15 @@ function Ship() {
 	var material = new THREE.MeshPhongMaterial({
 		color: 0x333333, wireframe: wireframe
 		/* uncomment for transparency */
-		/*
-		opacity: 0.6, 
+		, opacity: 0.6, 
 		transparent: true, 
-		depthWrite: false  */
+		depthWrite: false
 	});
 
 	var ship = new THREE.Mesh(geometry, material);
 
-	ship.position.y = shipGroundY + 0.01;
+	ship.groundY = shipGroundY;
+	ship.position.y = shipGroundY + 0.02;
 	ship.rotation.order = 'YXZ';
 
 	ship.velocity = new THREE.Vector3(0, 0, 0);
@@ -149,14 +148,14 @@ function Light() {
 
 	light.shadowMapWidth = 1024;
 	light.shadowMapHeight = 1024;
-	light.shadowCameraNear = 0.1;
-	light.shadowCameraFar = 110;
+	light.shadowCameraNear = 1;
+	light.shadowCameraFar = 200;
 	light.shadowCameraFov = 50;
 
 	light.shadowCameraLeft = -10;
-	light.shadowCameraRight = 10;
+	light.shadowCameraRight = 15;
 	light.shadowCameraTop = 10;
-	light.shadowCameraBottom = -10;
+	light.shadowCameraBottom = -15;
 
 	// debug
 //	light.shadowCameraVisible = true;
@@ -170,35 +169,17 @@ var light = Light();
 
 //// Camera
 
-var turnSpeed = 0.07;
-var moveSpeed = 0.08;
-var accel = 0.03;
-var g = 0.01;
-
-var ShipController = require('js/ShipController').ShipController;
+var ShipController = require('./js/ShipController').ShipController;
 
 var shipController = ShipController(keys, ship);
 
 function update() {
 	shipController.update();
 
-	var rot = new THREE.Matrix4();
-	rot.makeRotationFromEuler(ship.rotation);
-
-	if (keys.space) {
-		var els = rot.elements;
-		var up = new THREE.Vector3(els[4], els[5], els[6]);
-		up.multiplyScalar(accel);
-		ship.velocity.add(up);
-	}
-
-	ship.velocity.y -= g;
-	ship.position.add(ship.velocity);
-
-	if (ship.position.y < shipGroundY) {
-		ship.position.y = shipGroundY;
-		ship.velocity.set(0, 0, 0);
-	}
+	light.position.copy(ship.position);
+	light.position.y += 15;
+	light.target.position.copy(light.position);
+	light.target.position.y -= 100;
 
 	camera.position = {
 		x: ship.position.x,
