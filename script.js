@@ -1,12 +1,5 @@
 var THREE = require('three');
 
-//// Cannon
-
-var world = new CANNON.World();
-world.gravity.set(0, -9.82, 0);
-world.broadphase = new CANNON.NaiveBroadphase();
-
-
 
 
 //// Basic three.js init
@@ -70,9 +63,6 @@ window.onkeydown = function(e) {
 //// Objects
 
 function Plane() {
-
-	// ThreeJS part
-	
 	var n = 40;
 	var geometry = new THREE.CubeGeometry(n, n, 2, n, n); // Three.js geometry
 	var material = new THREE.MeshLambertMaterial(
@@ -85,21 +75,6 @@ function Plane() {
 
 	scene.add(plane);
 
-	// Physics part
-	
-	var groundShape = new CANNON.Plane();
-	var groundBody = new CANNON.RigidBody(0, groundShape);
-
-	// Make y point up
-	groundBody.quaternion.setFromVectors(
-		new CANNON.Vec3(0, 0, 1),
-		new CANNON.Vec3(0, 1, 0));
-	world.add(groundBody);
-
-	console.log(groundBody);
-
-
-
 	return plane;
 }
 
@@ -109,6 +84,7 @@ var shipGroundY = 0.3;
 function Ship() {
 	var geometry = new THREE.Geometry();
 
+	// Where center of gravity is supposed to be
 	var midpoint = [0, .2, -.6];
 
 	physicsPoints = [];
@@ -116,10 +92,6 @@ function Ship() {
 	function vec(x, y, z) {
 		geometry.vertices.push(
 				new THREE.Vector3(
-					x - midpoint[0],
-					y - midpoint[1],
-					z - midpoint[2]));
-		physicsPoints.push(new CANNON.Vec3(
 					x - midpoint[0],
 					y - midpoint[1],
 					z - midpoint[2]));
@@ -160,20 +132,6 @@ function Ship() {
 	ship.castShadow = true;
 	scene.add(ship);
 
-	// Physics part
-
-	var mass = 5;
-	var shape = new CANNON.ConvexPolyhedron(physicsPoints);
-
-	var body = new CANNON.RigidBody(mass, shape);
-	body.position.set(0, 2, 0);
-	body.quaternion.setFromVectors(
-		new CANNON.Vec3(1, 0, 0),
-		new CANNON.Vec3(0.8, 0.6, 0));
-	world.add(body);
-
-	ship.body = body;
-
 	return ship;
 }
 
@@ -211,13 +169,10 @@ var light = Light();
 
 //// Camera
 
-var turnSpeed = 0.02;
+var turnSpeed = 0.07;
 var moveSpeed = 0.08;
-var accel = 0.05;
-var g = 0.02;
-
-function updatePhysics() {
-}
+var accel = 0.03;
+var g = 0.01;
 
 function frame() {
 	requestAnimationFrame(frame);
@@ -263,41 +218,36 @@ function frame() {
 	}
 
 	var rot = new THREE.Matrix4();
-	rot.makeRotationFromQuaternion(ship.body.quaternion);
+	rot.makeRotationFromEuler(ship.rotation);
 
 	if (keys.space) {
 		var els = rot.elements;
-//		var right = [els[0], els[1], els[2]];
+		var right = [els[0], els[1], els[2]];
 		var up = new THREE.Vector3(els[4], els[5], els[6]);
+		console.log("up", right);
+		up.multiplyScalar(accel);
 //		var z = [els[8], els[9], els[10]];
 
-		ship.body.applyImpulse(
-			new CANNON.Vec3(0, 2, 0), 
-			new CANNON.Vec3(0, 0, 0));
-//		ship.body.quaternion.setFromAxisAngle({ x: 0, y: 1, z: 0 }, Math.PI / 2 );
+//		console.log("rotation", ship.rotation);
+//		console.log(up);
+		ship.velocity.add(up);
 	}
 
-	console.log(ship.body.quaternion);
+	ship.velocity.y -= g;
+	ship.position.add(ship.velocity);
 
-//	ship.velocity.y -= g;
-//	ship.position.add(ship.velocity);
+	if (ship.position.y < shipGroundY) {
+		ship.position.y = shipGroundY;
+		ship.velocity.set(0, 0, 0);
+	}
 
-//	if (ship.position.y < shipGroundY) {
-//		ship.position.y = shipGroundY;
-//		ship.velocity.set(0, 0, 0);
-//	}
 
-	world.step(1.0/60.0);
-	ship.position.copy(ship.body.position);
-	ship.body.quaternion.copy(ship.rotation);
-//	ship.rotation.copy(ship.body.quaternion);
-
-//	camera.position = {
-//		x: ship.position.x,
-//		y: ship.position.y + 4,
-//		z: ship.position.z + 10
-//	}
-//	camera.lookAt(ship.position);
+	camera.position = {
+		x: ship.position.x,
+		y: ship.position.y + 4,
+		z: ship.position.z + 10
+	}
+	camera.lookAt(ship.position);
 
 	// render
 	renderer.render(scene, camera);
