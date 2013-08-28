@@ -1,3 +1,12 @@
+//// Pointer lock bullshit
+
+// Works in Chrome
+function lockPointer() {
+	var el = document.body;
+	el.requestPointerLock = el.requestPointerLock || el.webkitRequestPointerLock;
+	document.body.requestPointerLock();
+}
+
 var THREE = require('three');
 
 
@@ -70,7 +79,26 @@ var mouse = {
 	}
 };
 
-window.onmousemove = function(e) {
+var captureMouse = false;
+
+document.body.onmousemove = function(e) {
+	if (!captureMouse) {
+		mouse.deltaX = 0;
+		mouse.deltaY = 0;
+		return;
+	}
+
+	// Try accessing pointer locked mouse
+	var movementX = event.movementX || event.webkitMovementX;
+	var movementY = event.movementY || event.webkitMovementY;
+
+	if (typeof movementX !== 'undefined') {
+		mouse.deltaX = movementX;
+		mouse.deltaY = movementY;
+		return;
+	}
+
+	// Old-fashioned mouse capture
 	if (mouse.prevX) {
 		mouse.deltaX = e.x - mouse.prevX;
 	}
@@ -80,9 +108,17 @@ window.onmousemove = function(e) {
 	mouse.prevX = e.x;
 	mouse.prevY = e.y;
 
-//	console.log(e);
 //	console.log("mouse delta", mouse.deltaX, mouse.deltaY);
 };
+
+window.onmousedown = function(e) {
+	if (!captureMouse) {
+		captureMouse = true;
+		lockPointer();
+	}
+
+	console.log(e);
+}
 
 
 
@@ -92,12 +128,40 @@ window.onmousemove = function(e) {
 function Plane() {
 	var n = 40;
 	var geometry = new THREE.CubeGeometry(n, n, 2, n, n); // Three.js geometry
-	var material = new THREE.MeshLambertMaterial(
+/*	console.log(geometry.vertices);
+	for (var i = 0; i < geometry.vertices.length; i++) {
+		geometry.vertices[i].y += Math.random() * 2;
+	}*/
+
+/*	var material = new THREE.MeshLambertMaterial(
 		{ color: 0x00ff00, wireframe: wireframe });
 	var plane = new THREE.Mesh(geometry, material);
 
 	plane.position.y = -1;
 	plane.rotation.x = Math.PI / 2;
+	plane.receiveShadow = true;*/
+
+	var n = 200;
+	var geometry = new THREE.PlaneGeometry(n, n, n, n);
+	for (var i = 0; i < geometry.vertices.length; i++) {
+		geometry.vertices[i].z += Math.random() * 0.9;
+//		console.log(geometry.colors[i]);
+	}
+
+	for (var i = 0; i < geometry.faces.length; i++) {
+		geometry.faces[i].vertexColors = [
+			new THREE.Color(0xff0000),
+			new THREE.Color(0x00ff00),
+			new THREE.Color(0x0000ff),
+		]
+//		console.log(geometry.faces[i]);
+	}
+
+	var material = new THREE.MeshBasicMaterial(
+		{ wireframe: wireframe,
+		  vertexColors: THREE.VertexColors });
+	var plane = new THREE.Mesh(geometry, material);
+	plane.rotation.x -= Math.PI / 2;
 	plane.receiveShadow = true;
 
 	scene.add(plane);
@@ -168,7 +232,7 @@ var ship = Ship();
 //// Light
 
 function Light() {
-	light = new THREE.DirectionalLight(0xFFFFFF);
+	light = new THREE.SpotLight(0xFFFFFF);
 	light.position.set(0, 100, 0);
 	light.target.position.set(0, 0, 0);
 	light.castShadow = true;
@@ -206,13 +270,14 @@ function update() {
 
 	light.position.copy(ship.position);
 	light.position.y += 15;
+	light.position.x += 15;
 	light.target.position.copy(light.position);
 	light.target.position.y -= 100;
 
 	camera.position = {
 		x: ship.position.x,
 		y: ship.position.y + 4,
-		z: ship.position.z + 10
+		z: ship.position.z + 15
 	}
 	camera.lookAt(ship.position);
 }
