@@ -5,7 +5,8 @@
   "version": "0.0.1",
   "keywords": [],
   "dependencies": {
-    "component/keyname": "*"
+    "component/keyname": "*",
+    "cvdlab/three": "*"
   },
   "development": {},
   "license": "MIT"
