@@ -10,8 +10,8 @@ html {
 
 body {
 	font: 16px/24px 'Helvetica Neue';
-	margin: 24px;
-	height: calc(100% - 48px);
+	margin: 10px;
+	height: calc(100% - 20px);
 	background: black;
 }
 
@@ -20,7 +20,7 @@ img.heightmap {
 }
 
 canvas {
-	border: 1px solid #ccc;
+	border: 1px solid #666;
 	width: 100%;
 //	height: 100%;
 }

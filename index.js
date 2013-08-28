@@ -49,8 +49,8 @@ var THREE = require('three');
 
 //// Basic three.js init
 
-var width = window.innerWidth - 10;
-var height = window.innerHeight - 10;
+var width = window.innerWidth - 20;
+var height = window.innerHeight - 20;
 
 var scene = new THREE.Scene();
 var renderer = new THREE.WebGLRenderer(); 
@@ -170,7 +170,7 @@ function Plane() {
 	var n = 256;
 
 	var geometry = new THREE.PlaneGeometry(n, n, n, n);
-	console.log(geometry.vertices.length);
+//	console.log(geometry.vertices.length);
 	for (var i = 0; i < geometry.vertices.length; i++) {
 		var y = Math.floor(i / 257);
 		var x = i % 257;
@@ -319,7 +319,7 @@ function heightAt(x, y) {
 	y = Math.min(Math.max(0, y), 255);
 
 	var h = convertHeight(heightData[y * 256 + x]); 
-	console.log('height at', x, y, h);
+//	console.log('height at', x, y, h);
 	return h;
 }
 
