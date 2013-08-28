@@ -1,7 +1,18 @@
 // heightmap to buffer
 //https://github.com/mrdoob/three.js/issues/1003
 
+function timer(what) {
+	return {
+		startTime: new Date(),
+		stop: function() {
+			var now = new Date();
+			console.log(what + " took " + (now - this.startTime) + " ms");
+		}
+	};
+}
+
 function getHeightData(img) {
+	var t = timer('getHeightData');
 	var s = 256;
     var canvas = document.createElement( 'canvas' );
     canvas.width = s;
@@ -24,6 +35,8 @@ function getHeightData(img) {
         var all = pix[i]+pix[i+1]+pix[i+2];
         data[j++] = all/3;
     }
+
+	t.stop();
 
     return data;
 }
@@ -170,10 +183,14 @@ function convertHeight(orig) {
 }
 
 function Plane() {
+	var pt = timer('plane');
 	var n = 256;
 
+	var tg = timer('create geometry');
 	var geometry = new THREE.PlaneGeometry(n, n, n, n);
-//	console.log(geometry.vertices.length);
+	tg.stop();
+
+	var t = timer('adjust vertices');
 	for (var i = 0; i < geometry.vertices.length; i++) {
 		var y = Math.floor(i / 257);
 		var x = i % 257;
@@ -185,6 +202,7 @@ function Plane() {
 
 		geometry.vertices[i].z += convertHeight(h);
 	}
+	t.stop();
 
 	function getColor(i) {
 		var y = Math.floor(i / 257);
@@ -195,6 +213,7 @@ function Plane() {
 		return new THREE.Color((h << 16) + (h << 8) + h);
 	}
 
+	t = timer('figure out colors');
 	for (var i = 0; i < geometry.faces.length; i++) {
 		var face = geometry.faces[i];
 
@@ -204,6 +223,7 @@ function Plane() {
 			getColor(face.c)
 		]
 	}
+	t.stop();
 
 	var material = new THREE.MeshBasicMaterial(
 		{ wireframe: wireframe,
@@ -214,10 +234,13 @@ function Plane() {
 
 	scene.add(plane);
 
+	pt.stop();
 	return plane;
 }
 
 function Ship() {
+	var t = timer('ship');
+
 	var geometry = new THREE.Geometry();
 
 	// The position where ship is on the ground
@@ -264,6 +287,8 @@ function Ship() {
 
 	ship.groundY = shipGroundY;
 	ship.position.y = shipGroundY + 0.02;
+	ship.position.x = -4;
+	ship.position.z = 4;
 	ship.rotation.order = 'YXZ';
 
 	ship.velocity = new THREE.Vector3(0, 0, 0);
@@ -271,6 +296,7 @@ function Ship() {
 	ship.castShadow = true;
 	scene.add(ship);
 
+	t.stop();
 	return ship;
 }
 
