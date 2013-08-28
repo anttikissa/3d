@@ -6,32 +6,8 @@ var world = new CANNON.World();
 world.gravity.set(0, -9.82, 0);
 world.broadphase = new CANNON.NaiveBroadphase();
 
-var mass = 5, radius = 1;
-var sphereShape = new CANNON.Sphere(radius);
-var sphereBody = new CANNON.RigidBody(mass, sphereShape);
-sphereBody.position.set(0, 10, 0);
-world.add(sphereBody);
 
-var groundShape = new CANNON.Plane();
-var groundBody = new CANNON.RigidBody(0, groundShape);
-// Make y up
-groundBody.quaternion.setFromVectors(
-	new CANNON.Vec3(0, 0, 1),
-	new CANNON.Vec3(0, 1, 0));
-world.add(groundBody);
 
-console.log(groundBody);
-
-var ball = new THREE.Mesh(
-	new THREE.SphereGeometry(1, 10, 10),
-	new THREE.MeshBasicMaterial({ color: 0x0000ff, wireframe: true }));
-ball.castShadow = true;
-
-setInterval(function(){
-	world.step(1.0/60.0);
-	console.log("Sphere position: " + sphereBody.position);
-	ball.position.copy(sphereBody.position);
-}, 1000.0/60.0);
 
 //// Basic three.js init
 
@@ -52,7 +28,6 @@ camera.lookAt(scene.position);
 
 document.body.appendChild(renderer.domElement);
 
-scene.add(ball);
 
 
 
@@ -95,6 +70,9 @@ window.onkeydown = function(e) {
 //// Objects
 
 function Plane() {
+
+	// ThreeJS part
+	
 	var n = 40;
 	var geometry = new THREE.CubeGeometry(n, n, 2, n, n); // Three.js geometry
 	var material = new THREE.MeshLambertMaterial(
@@ -107,6 +85,21 @@ function Plane() {
 
 	scene.add(plane);
 
+	// Physics part
+	
+	var groundShape = new CANNON.Plane();
+	var groundBody = new CANNON.RigidBody(0, groundShape);
+
+	// Make y point up
+	groundBody.quaternion.setFromVectors(
+		new CANNON.Vec3(0, 0, 1),
+		new CANNON.Vec3(0, 1, 0));
+	world.add(groundBody);
+
+	console.log(groundBody);
+
+
+
 	return plane;
 }
 
@@ -118,9 +111,15 @@ function Ship() {
 
 	var midpoint = [0, .2, -.6];
 
+	physicsPoints = [];
+
 	function vec(x, y, z) {
 		geometry.vertices.push(
 				new THREE.Vector3(
+					x - midpoint[0],
+					y - midpoint[1],
+					z - midpoint[2]));
+		physicsPoints.push(new CANNON.Vec3(
 					x - midpoint[0],
 					y - midpoint[1],
 					z - midpoint[2]));
@@ -153,13 +152,6 @@ function Ship() {
 
 	var ship = new THREE.Mesh(geometry, material);
 
-	// Works but shadows don't work afterwards
-//	var wireframeMaterial = new THREE.MeshBasicMaterial({
-//		color: 0x888888, wireframe: true, wireframeLinewidth: 3
-//	});
-//	var ship = THREE.SceneUtils.createMultiMaterialObject(
-//		geometry, [material, wireframeMaterial]);
-
 	ship.position.y = shipGroundY + 0.01;
 	ship.rotation.order = 'YXZ';
 
@@ -168,13 +160,25 @@ function Ship() {
 	ship.castShadow = true;
 	scene.add(ship);
 
+	// Physics part
+
+	var mass = 5;
+	var shape = new CANNON.ConvexPolyhedron(physicsPoints);
+
+	var body = new CANNON.RigidBody(mass, shape);
+	body.position.set(0, 2, 0);
+	body.quaternion.setFromVectors(
+		new CANNON.Vec3(1, 0, 0),
+		new CANNON.Vec3(0.8, 0.6, 0));
+	world.add(body);
+
+	ship.body = body;
+
 	return ship;
 }
 
 var plane = Plane();
 var ship = Ship();
-
-
 
 //// Light
 
@@ -212,73 +216,68 @@ var moveSpeed = 0.08;
 var accel = 0.05;
 var g = 0.02;
 
+function updatePhysics() {
+}
+
 function frame() {
 	requestAnimationFrame(frame);
 
 	if (keys.left) {
 		ship.rotation.y += turnSpeed;
-		ship.__dirtyRotation = true;
 	}
 
 	if (keys.right) {
 		ship.rotation.y -= turnSpeed;
-		ship.__dirtyRotation = true;
 	}
 
 	if (keys.up) {
 		ship.rotation.x -= turnSpeed;
-		ship.__dirtyRotation = true;
 	}
 
 	if (keys.down) {
 		ship.rotation.x += turnSpeed;
-		ship.__dirtyRotation = true;
 	}
 
 	if (keys.q) {
 		ship.rotation.z += turnSpeed;
-		ship.__dirtyRotation = true;
 	}
 
 	if (keys.e) {
 		ship.rotation.z -= turnSpeed;
-		ship.__dirtyRotation = true;
 	}
-
-	var rot = new THREE.Matrix4();
-	rot.makeRotationFromEuler(ship.rotation);
 
 	if (keys.a) {
 		ship.position.x -= moveSpeed;
-		ship.__dirtyPosition = true;
 	}
 
 	if (keys.d) {
 		ship.position.x += moveSpeed;
-		ship.__dirtyPosition = true;
 	}
 
 	if (keys.w) {
 		ship.position.z -= moveSpeed;
-		ship.__dirtyPosition = true;
 	}
 
 	if (keys.s) {
 		ship.position.z += moveSpeed;
-		ship.__dirtyPosition = true;
 	}
+
+	var rot = new THREE.Matrix4();
+	rot.makeRotationFromQuaternion(ship.body.quaternion);
 
 	if (keys.space) {
 		var els = rot.elements;
 //		var right = [els[0], els[1], els[2]];
 		var up = new THREE.Vector3(els[4], els[5], els[6]);
 //		var z = [els[8], els[9], els[10]];
-//		ship.applyCentralImpulse(up.multiplyScalar(0.9));
 
-		sphereBody.applyImpulse(
+		ship.body.applyImpulse(
 			new CANNON.Vec3(0, 2, 0), 
 			new CANNON.Vec3(0, 0, 0));
+//		ship.body.quaternion.setFromAxisAngle({ x: 0, y: 1, z: 0 }, Math.PI / 2 );
 	}
+
+	console.log(ship.body.quaternion);
 
 //	ship.velocity.y -= g;
 //	ship.position.add(ship.velocity);
@@ -288,12 +287,17 @@ function frame() {
 //		ship.velocity.set(0, 0, 0);
 //	}
 
-	camera.position = {
-		x: ship.position.x,
-		y: ship.position.y + 4,
-		z: ship.position.z + 10
-	}
-	camera.lookAt(ship.position);
+	world.step(1.0/60.0);
+	ship.position.copy(ship.body.position);
+	ship.body.quaternion.copy(ship.rotation);
+//	ship.rotation.copy(ship.body.quaternion);
+
+//	camera.position = {
+//		x: ship.position.x,
+//		y: ship.position.y + 4,
+//		z: ship.position.z + 10
+//	}
+//	camera.lookAt(ship.position);
 
 	// render
 	renderer.render(scene, camera);
