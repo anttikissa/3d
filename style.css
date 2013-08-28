@@ -15,6 +15,10 @@ body {
 	background: black;
 }
 
+img.heightmap {
+	display: none;
+}
+
 canvas {
 	border: 1px solid #ccc;
 	width: 100%;

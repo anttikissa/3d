@@ -54,10 +54,6 @@ ShipController.prototype.update = function() {
 		ship.velocity.y -= g;
 		ship.position.add(ship.velocity);
 
-		if (ship.position.y < ship.groundY) {
-			ship.position.y = ship.groundY;
-			ship.velocity.set(0, 0, 0);
-		}
 	}
 
 	handleKeyboard();

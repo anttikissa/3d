@@ -1,6 +1,42 @@
-//// Pointer lock bullshit
+// heightmap to buffer
+//https://github.com/mrdoob/three.js/issues/1003
 
-// Works in Chrome
+function getHeightData(img) {
+	var s = 256;
+    var canvas = document.createElement( 'canvas' );
+    canvas.width = s;
+    canvas.height = s;
+    var context = canvas.getContext( '2d' );
+
+    var size = s * s, data = new Float32Array( size );
+
+    context.drawImage(img,0,0);
+
+    for ( var i = 0; i < size; i ++ ) {
+        data[i] = 0
+    }
+
+    var imgd = context.getImageData(0, 0, s, s);
+    var pix = imgd.data;
+
+    var j=0;
+    for (var i = 0, n = pix.length; i < n; i += (4)) {
+        var all = pix[i]+pix[i+1]+pix[i+2];
+        data[j++] = all/3;
+    }
+
+    return data;
+}
+
+var heightmapImg = document.querySelector('img.heightmap');
+//console.log(heightmapImg);
+var heightData = getHeightData(heightmapImg);
+console.log(heightData.length);
+
+
+
+//// Pointer lock - works in Chrome
+
 function lockPointer() {
 	var el = document.body;
 	el.requestPointerLock = el.requestPointerLock || el.webkitRequestPointerLock;
@@ -125,36 +161,45 @@ window.onmousedown = function(e) {
 
 //// Objects
 
+// convert [0.255] to something suitable for playing
+function convertHeight(orig) {
+	return -20 + .08 * orig;
+}
+
 function Plane() {
-	var n = 40;
-	var geometry = new THREE.CubeGeometry(n, n, 2, n, n); // Three.js geometry
-/*	console.log(geometry.vertices);
-	for (var i = 0; i < geometry.vertices.length; i++) {
-		geometry.vertices[i].y += Math.random() * 2;
-	}*/
+	var n = 256;
 
-/*	var material = new THREE.MeshLambertMaterial(
-		{ color: 0x00ff00, wireframe: wireframe });
-	var plane = new THREE.Mesh(geometry, material);
-
-	plane.position.y = -1;
-	plane.rotation.x = Math.PI / 2;
-	plane.receiveShadow = true;*/
-
-	var n = 200;
 	var geometry = new THREE.PlaneGeometry(n, n, n, n);
+	console.log(geometry.vertices.length);
 	for (var i = 0; i < geometry.vertices.length; i++) {
-		geometry.vertices[i].z += Math.random() * 0.9;
-//		console.log(geometry.colors[i]);
+		var y = Math.floor(i / 257);
+		var x = i % 257;
+		// TODO interpolate x and y properly
+		var h = heightData[x + y * 256 ];
+		/*
+		if (x < 128)
+			h = 0; */
+
+		geometry.vertices[i].z += convertHeight(h);
+	}
+
+	function getColor(i) {
+		var y = Math.floor(i / 257);
+		var x = i % 257;
+		// TODO interpolate x and y properly
+		var h = heightData[x + y * 256 ];
+		h *= 0.85;
+		return new THREE.Color((h << 16) + (h << 8) + h);
 	}
 
 	for (var i = 0; i < geometry.faces.length; i++) {
-		geometry.faces[i].vertexColors = [
-			new THREE.Color(0xff0000),
-			new THREE.Color(0x00ff00),
-			new THREE.Color(0x0000ff),
+		var face = geometry.faces[i];
+
+		face.vertexColors = [
+			getColor(face.a),
+			getColor(face.b),
+			getColor(face.c)
 		]
-//		console.log(geometry.faces[i]);
 	}
 
 	var material = new THREE.MeshBasicMaterial(
@@ -264,15 +309,38 @@ var ShipController = require('./js/ShipController').ShipController;
 
 var shipController = ShipController(keys, mouse, ship);
 
+function heightAt(x, y) {
+//	console.log('height', x, y);
+	x += 127.5;
+	x = Math.floor(x);
+	x = Math.min(Math.max(0, x), 255);
+	y += 127.5;
+	y = Math.floor(y);
+	y = Math.min(Math.max(0, y), 255);
+
+	var h = convertHeight(heightData[y * 256 + x]); 
+	console.log('height at', x, y, h);
+	return h;
+}
+
 function update() {
 	shipController.update();
+
+	// Handle ship-ground collision
+	var groundHeight = heightAt(ship.position.x, ship.position.z);
+	if (ship.position.y < ship.groundY + groundHeight) {
+		ship.position.y = ship.groundY + groundHeight;
+		ship.velocity.set(0, 0, 0);
+	}
+
 	mouse.update();
 
 	light.position.copy(ship.position);
 	light.position.y += 15;
-	light.position.x += 15;
+	light.position.x += 0;
 	light.target.position.copy(light.position);
 	light.target.position.y -= 100;
+
 
 	camera.position = {
 		x: ship.position.x,
