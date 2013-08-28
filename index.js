@@ -58,6 +58,33 @@ window.onkeydown = function(e) {
 	}
 }
 
+var mouseDampingFactor = 0.4;
+
+var mouse = {
+	deltaX: 0,
+	deltaY: 0,
+
+	update: function() {
+		this.deltaX = this.deltaX *= mouseDampingFactor;
+		this.deltaY = this.deltaY *= mouseDampingFactor;
+	}
+};
+
+window.onmousemove = function(e) {
+	if (mouse.prevX) {
+		mouse.deltaX = e.x - mouse.prevX;
+	}
+	if (mouse.prevY) {
+		mouse.deltaY = e.y - mouse.prevY;
+	}
+	mouse.prevX = e.x;
+	mouse.prevY = e.y;
+
+//	console.log(e);
+//	console.log("mouse delta", mouse.deltaX, mouse.deltaY);
+};
+
+
 
 
 //// Objects
@@ -171,10 +198,11 @@ var light = Light();
 
 var ShipController = require('./js/ShipController').ShipController;
 
-var shipController = ShipController(keys, ship);
+var shipController = ShipController(keys, mouse, ship);
 
 function update() {
 	shipController.update();
+	mouse.update();
 
 	light.position.copy(ship.position);
 	light.position.y += 15;
