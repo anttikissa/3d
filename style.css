@@ -25,6 +25,26 @@ canvas {
 //	height: 100%;
 }
 
+.info {
+	width: 100%;
+	color: #eee;
+	font: 24px 'helvetica', arial, sans-serif;
+	text-align: center;
+	font-weight: 500;
+	position: absolute;
+	background: rgba(0, 0, 0, 0.4);
+	top: 0;
+	bottom: 0;
+	margin: auto;
+	height: 120px;
+	padding: 48px;
+}
+
+.info.hidden {
+	transition: opacity 0.4s;
+	opacity: 0.0;
+}
+
 h1 {
 	font-size: 16px;
 	font-weight: normal;

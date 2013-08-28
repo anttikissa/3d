@@ -29,7 +29,6 @@ function getHeightData(img) {
 }
 
 var heightmapImg = document.querySelector('img.heightmap');
-//console.log(heightmapImg);
 var heightData = getHeightData(heightmapImg);
 console.log(heightData.length);
 
@@ -149,6 +148,10 @@ document.body.onmousemove = function(e) {
 
 window.onmousedown = function(e) {
 	if (!captureMouse) {
+		var info = document.querySelector('.info');
+		info.classList.add('hidden');
+		console.log(info);
+
 		captureMouse = true;
 		lockPointer();
 	}
