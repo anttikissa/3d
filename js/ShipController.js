@@ -41,14 +41,21 @@ ShipController.prototype.update = function() {
 	}
 
 	function updatePhysics() {
+		// Calculate ship's x, y, z axes world coordinates and store
+		// in shop.{right,up,back}.
+		// TODO move to a better place.
 		var rot = new THREE.Matrix4();
+		var els = rot.elements;
 		rot.makeRotationFromEuler(ship.rotation);
+		ship.right = new THREE.Vector3(els[0], els[1], els[2]);
+		ship.up = new THREE.Vector3(els[4], els[5], els[6]);
+		ship.back = new THREE.Vector3(els[8], els[9], els[10]);
 
 		if (keys.space) {
-			var els = rot.elements;
-			var up = new THREE.Vector3(els[4], els[5], els[6]);
-			up.multiplyScalar(accel);
-			ship.velocity.add(up);
+			// untested
+			var thrust = ship.up.clone();
+			thrust.multiplyScalar(accel);
+			ship.velocity.add(thrust);
 		}
 
 		ship.velocity.y -= g;

@@ -109,6 +109,8 @@ window.onkeyup = function(e) {
 }
 
 window.onkeydown = function(e) {
+	hideInfo();
+
 	var key = keynameOrLetter(e.keyCode);
 	if (key) {
 		keys[key] = true;
@@ -159,12 +161,14 @@ document.body.onmousemove = function(e) {
 //	console.log("mouse delta", mouse.deltaX, mouse.deltaY);
 };
 
+function hideInfo() {
+	var info = document.querySelector('.info');
+	info.classList.add('hidden');
+}
+
 window.onmousedown = function(e) {
 	if (!captureMouse) {
-		var info = document.querySelector('.info');
-		info.classList.add('hidden');
-		console.log(info);
-
+		hideInfo();
 		captureMouse = true;
 		lockPointer();
 	}
@@ -185,24 +189,35 @@ function convertHeight(orig) {
 function Plane() {
 	var pt = timer('plane');
 	var n = 256;
+	var smallN = 64;
+	var splitInto = n / smallN;
 
 	var tg = timer('create geometry');
-	var geometry = new THREE.PlaneGeometry(n, n, n, n);
+
+	var geometries = []
+
+	for (var i = 0; i < splitInto; i++) {
+		geometries.push([]);
+		for (var j = 0; j < splitInto; j++) {
+			var geometry = new THREE.PlaneGeometry(
+				smallN, smallN, smallN, smallN);
+
+			geometries[i][j] = geometry;
+
+			for (var k = 0; k < geometry.vertices.length; k++) {
+				// TODODODO
+				var y = Math.floor(k / 257);
+				var x = k % 257;
+				// TODO interpolate x and y properly
+				var h = heightData[x + y * 256 ];
+
+				geometry.vertices[k].z += convertHeight(h);
+			}
+		}
+	}
+
 	tg.stop();
 
-	var t = timer('adjust vertices');
-	for (var i = 0; i < geometry.vertices.length; i++) {
-		var y = Math.floor(i / 257);
-		var x = i % 257;
-		// TODO interpolate x and y properly
-		var h = heightData[x + y * 256 ];
-		/*
-		if (x < 128)
-			h = 0; */
-
-		geometry.vertices[i].z += convertHeight(h);
-	}
-	t.stop();
 
 	function getColor(i) {
 		var y = Math.floor(i / 257);
@@ -370,12 +385,23 @@ function update() {
 	light.target.position.copy(light.position);
 	light.target.position.y -= 100;
 
-
-	camera.position = {
-		x: ship.position.x,
-		y: ship.position.y + 4,
-		z: ship.position.z + 15
+	var turningCamera = true;
+	if (turningCamera) {
+		var cameraPos = ship.back.clone();
+		cameraPos.y = 0;
+		cameraPos.normalize();
+		cameraPos.multiplyScalar(15);
+		cameraPos.y += 4;
+		camera.position = ship.position.clone();
+		camera.position.add(cameraPos);
+	} else {
+		camera.position = {
+			x: ship.position.x,
+			y: ship.position.y + 4,
+			z: ship.position.z + 15
+		};
 	}
+
 	camera.lookAt(ship.position);
 }
 
