@@ -1,12 +1,25 @@
 // heightmap to buffer
 //https://github.com/mrdoob/three.js/issues/1003
 
+var frameCount = 0;
+
+function log() {
+	console.log.apply(console, arguments);
+}
+
+// Log every two seconds
+function logr() {
+	if ((frameCount % 120) === 0) {
+		console.log.apply(console, arguments);
+	}
+}
+
 function timer(what) {
 	return {
 		startTime: new Date(),
 		stop: function() {
 			var now = new Date();
-			console.log(what + " took " + (now - this.startTime) + " ms");
+			log(what + " took " + (now - this.startTime) + " ms");
 		}
 	};
 }
@@ -43,7 +56,7 @@ function getHeightData(img) {
 
 var heightmapImg = document.querySelector('img.heightmap');
 var heightData = getHeightData(heightmapImg);
-console.log(heightData.length);
+log(heightData.length);
 
 
 
@@ -87,7 +100,7 @@ renderer.domElement.focus();
 
 var wireframe = false;
 // How many patches to show around current one
-var patchVisibility = 1;
+var patchVisibility = 2;
 var visualizePatches = true;
 
 
@@ -163,7 +176,7 @@ document.body.onmousemove = function(e) {
 	mouse.prevX = e.x;
 	mouse.prevY = e.y;
 
-//	console.log("mouse delta", mouse.deltaX, mouse.deltaY);
+//	log("mouse delta", mouse.deltaX, mouse.deltaY);
 };
 
 function hideInfo() {
@@ -178,7 +191,7 @@ window.onmousedown = function(e) {
 		lockPointer();
 	}
 
-	console.log(e);
+	log(e);
 }
 
 
@@ -196,12 +209,12 @@ var heightmapSize = 256;
 // This is the part we use from it
 var terrainN = 64;
 // Size of patch
-var patchSize = 16;
+var patchSize = 4;
 var splitInto = terrainN / patchSize;
 
 var shipStartPos = {
 	x: /* terrainN / 2 + */ patchSize / 2,
-	y: terrainN / 2 + patchSize / 2
+	y: /* terrainN / 2 + */ patchSize / 2
 }
 
 // x, y are heightmap coordinates
@@ -429,6 +442,8 @@ function scroll(o) {
 }
 
 function update() {
+	frameCount++;
+
 	shipController.update();
 	scroll(ship);
 
@@ -437,6 +452,9 @@ function update() {
 	if (ship.position.y < ship.groundY + groundHeight) {
 		ship.position.y = ship.groundY + groundHeight;
 		ship.velocity.set(0, 0, 0);
+
+		ship.rotation.x = 0;
+		ship.rotation.z = 0;
 	}
 
 	mouse.update();
@@ -467,6 +485,24 @@ function update() {
 	camera.lookAt(ship.position);
 }
 
+// modulo distance of lhs and rhs
+// i.e. moduloDist(0, 3, 4) == 1
+// i.e. moduloDist(3, 0, 4) == 1
+function moduloDist(a, b, modulus) {
+	return Math.min(
+		modulo(a - b, modulus),
+		modulo(b - a, modulus));
+}
+
+function modulo(lhs, rhs) {
+	if (lhs < 0)
+		var result = (lhs % rhs) + rhs;
+	else
+		var result = lhs % rhs;
+
+	return result;
+}
+
 function draw() {
 	var currentPatch = {
 		x: Math.floor(ship.position.x / patchSize),
@@ -476,14 +512,19 @@ function draw() {
 	// Set patches that are visible from block (i, j).
 	// This includes patches visible across world boundary.
 	function setVisiblePatches(x, y) {
+//		log("x and y are ", x, y);
 		for (var i = 0; i < splitInto; i++) {
 			for (var j = 0; j < splitInto; j++) {
+
+//				logr("patch i, j", i, j);
 				var dist = {
-					x: Math.abs(x - i),
-					y: Math.abs(y - j),
+					x: moduloDist(x, i, splitInto),
+					y: moduloDist(y, j, splitInto)
 				}
+//				logr("distance", dist);
 				var maxDist = Math.max(dist.x, dist.y);
 				if (maxDist <= patchVisibility) {
+//					logr("distance visible cos maxDist", maxDist);
 					terrain[i][j].visible = true;
 				} else {
 					terrain[i][j].visible = false;
@@ -495,13 +536,13 @@ function draw() {
 	setVisiblePatches(currentPatch.x, currentPatch.y);
 
 	renderer.render(scene, camera);
-	var secondaryRenderOffsetX = terrainN;
+//	var secondaryRenderOffsetX = terrainN;
 
-	if (secondaryRenderOffsetX !== 0) {
-		camera.position.x += secondaryRenderOffsetX;
-		renderer.autoClear = false;
-		renderer.render(scene, camera);
-	}
+//	if (secondaryRenderOffsetX !== 0) {
+//		camera.position.x += secondaryRenderOffsetX;
+//		renderer.autoClear = false;
+//		renderer.render(scene, camera);
+//	}
 }
 
 function frame() {
