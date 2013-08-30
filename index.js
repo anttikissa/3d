@@ -86,6 +86,9 @@ renderer.domElement.focus();
 //// Misc config
 
 var wireframe = false;
+// How many patches to show around current one
+var patchVisibility = 3;
+var visualizePatches = true;
 
 
 
@@ -189,12 +192,12 @@ function convertHeight(orig) {
 }
 
 // This is the actual image size
-var heightmapN = 256;
+var heightmapSize = 256;
 // This is the part we use from it
 var terrainN = 256;
-// tmp just one patch
-var patchN = 64;
-var splitInto = terrainN / patchN;
+// Size of patch
+var patchSize = 16;
+var splitInto = terrainN / patchSize;
 
 // x, y are heightmap coordinates
 function getHeight(x, y) {
@@ -207,19 +210,19 @@ function getHeight(x, y) {
 	x %= terrainN;
 	y = Math.floor(y);
 	y %= terrainN;
-	return heightData[x + y * heightmapN];
+	return heightData[x + y * heightmapSize];
 }
 
 function terrainPatch(i, j) {
 	var geometry = new THREE.PlaneGeometry(
-		patchN, patchN, patchN, patchN);
+		patchSize, patchSize, patchSize, patchSize);
 
 	function getHeightmapX(k) {
-		return k % (patchN + 1) + i * patchN;
+		return k % (patchSize + 1) + i * patchSize;
 	}
 	// Get the actual X coordinate (in the bigger heightmap)
 	function getHeightmapY(k) {
-		return Math.floor(k / (patchN + 1)) + j * patchN;
+		return Math.floor(k / (patchSize + 1)) + j * patchSize;
 	}
 	for (var k = 0; k < geometry.vertices.length; k++) {
 		var x = getHeightmapX(k);
@@ -234,15 +237,21 @@ function terrainPatch(i, j) {
 		var y = getHeightmapY(k);
 		var h = getHeight(x, y);
 		h *= 0.85;
-		// plain gray
-//		return new THREE.Color((h << 16) + (h << 8) + h);
-		// Make it easier to tell patches apart
-		function normSin(value) { return 0.25 * (Math.sin(9 * value + 5)) + .75; }
-		function normCos(value) { return 0.25 * (Math.cos(4 * value - 99)) + .75; }
-		return new THREE.Color(
+
+		if (visualizePatches) {
+			function normSin(value) {
+				return 0.25 * (Math.sin(9 * value + 5)) + .75;
+			}
+			function normCos(value) {
+				return 0.25 * (Math.cos(4 * value - 99)) + .75;
+			}
+			return new THREE.Color(
 				(Math.floor(normSin(i * j * 5) * h) << 16) + 
 				(Math.floor(normCos(i) * normSin(i + j) * h) << 8) +
 				(Math.floor(normCos(j * 11))) * h);
+		}
+
+		return new THREE.Color((h << 16) + (h << 8) + h);
 	}
 
 	for (var k = 0; k < geometry.faces.length; k++) {
@@ -259,8 +268,8 @@ function terrainPatch(i, j) {
 		{ wireframe: wireframe,
 		  vertexColors: THREE.VertexColors });
 	var plane = new THREE.Mesh(geometry, material);
-	plane.position.x = (i + 0.5) * patchN;
-	plane.position.z = (j + 0.5) * patchN;
+	plane.position.x = (i + 0.5) * patchSize;
+	plane.position.z = (j + 0.5) * patchSize;
 	plane.rotation.x -= Math.PI / 2;
 	plane.receiveShadow = true;
 
@@ -269,8 +278,9 @@ function terrainPatch(i, j) {
 	return plane;
 }
 
-function Plane() {
-	var pt = timer('plane');
+// Right now, terrain is an array of array of patches
+function Terrain() {
+	var pt = timer('terrain');
 
 	var patches = []
 
@@ -284,7 +294,8 @@ function Plane() {
 	}
 
 	pt.stop();
-//	return plane;
+
+	return patches;
 }
 
 function Ship() {
@@ -349,7 +360,7 @@ function Ship() {
 	return ship;
 }
 
-var plane = Plane();
+var terrain = Terrain();
 var ship = Ship();
 
 //// Light
@@ -437,6 +448,28 @@ function update() {
 }
 
 function draw() {
+	var currentPatch = {
+		x: Math.floor(ship.position.x / patchSize),
+		y: Math.floor(ship.position.z / patchSize)
+	}
+
+	for (var i = 0; i < splitInto; i++) {
+		for (var j = 0; j < splitInto; j++) {
+			var dist = {
+				x: Math.abs(currentPatch.x - i),
+				y: Math.abs(currentPatch.y - j),
+			}
+			var maxDist = Math.max(dist.x, dist.y);
+			if (maxDist <= patchVisibility) {
+//			var distSquared = dist.x * dist.x + dist.y * dist.y;
+//			if (distSquared <= (patchVisibility * patchVisibility)) {
+				terrain[i][j].visible = true;
+			} else {
+				terrain[i][j].visible = false;
+			}
+		}
+	}
+
 	renderer.render(scene, camera);
 }
 
