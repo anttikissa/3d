@@ -86,7 +86,7 @@ var renderer = new THREE.WebGLRenderer();
 
 renderer.shadowMapEnabled = true;
 renderer.setSize(width, height);
-renderer.setClearColor(0x444444, 1);
+renderer.setClearColor(0x0, 1);
 
 var camera = new THREE.PerspectiveCamera(60, width / height, 1, 10000);
 scene.add(camera);
