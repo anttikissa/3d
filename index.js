@@ -210,7 +210,7 @@ function convertHeight(orig) {
 // It's assumed that patchVisibility < 0.5 * splitInto
 // (since it makes no sense otherwise)
 var patchVisibility = 3;
-var visualizePatches = true;
+var visualizePatches = false;
 
 // This is the actual image size
 var heightmapSize = 256;
