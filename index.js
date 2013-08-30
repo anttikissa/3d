@@ -103,11 +103,6 @@ renderer.domElement.focus();
 //// Misc config
 
 var wireframe = false;
-// How many patches to show around current one
-// It's assumed that patchVisibility < 0.5 * splitInto
-// (since it makes no sense otherwise)
-var patchVisibility = 2;
-var visualizePatches = true;
 
 
 
@@ -210,6 +205,12 @@ window.onmousedown = function(e) {
 function convertHeight(orig) {
 	return -20 + .08 * orig;
 }
+
+// How many patches to show around current one
+// It's assumed that patchVisibility < 0.5 * splitInto
+// (since it makes no sense otherwise)
+var patchVisibility = 3;
+var visualizePatches = true;
 
 // This is the actual image size
 var heightmapSize = 256;
@@ -372,11 +373,11 @@ function Ship() {
 	// TODO depthwrite doesn't work, really the objects should
 	// always be rendered after the terrain
 	var material = new THREE.MeshPhongMaterial({
-		color: 0x333333, wireframe: wireframe
+		color: 0xffffff, wireframe: wireframe
 		// uncomment for transparency
-		, opacity: 0.6, 
+/*		, opacity: 0.5, 
 		transparent: true, 
-		depthWrite: true
+		depthWrite: true */
 	});
 
 	var ship = new THREE.Mesh(geometry, material);
@@ -401,8 +402,14 @@ var ship = Ship();
 
 //// Light
 
+function AmbientLight() {
+	var light = new THREE.AmbientLight(0x888888);
+	scene.add(light);
+	return light;
+}
+
 function Light() {
-	light = new THREE.SpotLight(0xFFFFFF);
+	var light = new THREE.SpotLight(0xFFFFFF);
 	light.position.set(0, 100, 0);
 	light.target.position.set(0, 0, 0);
 	light.castShadow = true;
@@ -424,6 +431,7 @@ function Light() {
 	return light;
 }
 
+var ambientLight = AmbientLight();
 var light = Light();
 
 
