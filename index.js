@@ -409,8 +409,22 @@ function heightAt(x, y) {
 	return h;
 }
 
+// Wrap objects around the world boundary if necessary
+function scroll(o) {
+	if (o.position.z < 0)
+		o.position.z += terrainN;
+	else
+		o.position.z = o.position.z % terrainN;
+
+	if (o.position.x < 0)
+		o.position.x += terrainN;
+	else
+		o.position.x = o.position.x % terrainN;
+}
+
 function update() {
 	shipController.update();
+	scroll(ship);
 
 	// Handle ship-ground collision
 	var groundHeight = heightAt(ship.position.x, ship.position.z);
