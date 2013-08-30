@@ -1,0 +1,32 @@
+
+Importance:
+
+1 - needed to make playing fun
+2 - needed to make playing easier
+3 - annoying things
+4 - cosmetic things
+
+Bugs:
+
+1 Can't shoot no bullets.
+
+1 There are no enemies.
+
+1 You can't see the fuel trails and it's difficult to see where you're moving
+when you're flying high.
+
+1 There's no missions or goal or anything.
+
+1 Water might be fun.
+
+2 Hovering and landing need some autopilot magic.
+
+3 You can't really restart the game.
+
+4 Tweak land colors, etc.
+
+4 Rendering the scene in multiple passes causes minor glitches when crossing the
+boundary.
+  - shadow is rendered wrongly when you're hovering on the boundary
+  - opacity doesn't work when you see ground through your ship
+
