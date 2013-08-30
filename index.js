@@ -8,18 +8,22 @@ function log() {
 }
 
 // Log every two seconds
+// r stands for...  I forgot.  Rarely?
 function logr() {
 	if ((frameCount % 120) === 0) {
 		console.log.apply(console, arguments);
 	}
 }
 
-function timer(what) {
+function timer(what, opts) {
+	opts = opts || {}
+	opts.r = opts.r || false;
+
 	return {
 		startTime: new Date(),
 		stop: function() {
 			var now = new Date();
-			log(what + " took " + (now - this.startTime) + " ms");
+			(opts.r ? logr : log)(what + " took " + (now - this.startTime) + " ms");
 		}
 	};
 }
@@ -100,6 +104,8 @@ renderer.domElement.focus();
 
 var wireframe = false;
 // How many patches to show around current one
+// It's assumed that patchVisibility < 0.5 * splitInto
+// (since it makes no sense otherwise)
 var patchVisibility = 2;
 var visualizePatches = true;
 
@@ -207,9 +213,10 @@ function convertHeight(orig) {
 // This is the actual image size
 var heightmapSize = 256;
 // This is the part we use from it
-var terrainN = 64;
+var terrainN = 256;
 // Size of patch
-var patchSize = 4;
+var patchSize = 32;
+// How many patches per world (in one dimension)
 var splitInto = terrainN / patchSize;
 
 var shipStartPos = {
@@ -354,12 +361,14 @@ function Ship() {
 
 	geometry.computeFaceNormals();
 
+	// TODO depthwrite doesn't work, really the objects should
+	// always be rendered after the terrain
 	var material = new THREE.MeshPhongMaterial({
 		color: 0x333333, wireframe: wireframe
-		/* uncomment for transparency */
+		// uncomment for transparency
 		, opacity: 0.6, 
 		transparent: true, 
-		depthWrite: false
+		depthWrite: true
 	});
 
 	var ship = new THREE.Mesh(geometry, material);
@@ -509,23 +518,24 @@ function draw() {
 		y: Math.floor(ship.position.z / patchSize)
 	}
 
+	var t = timer('draw', { r: true });
+	var patchDrawCount = 0;
+
 	// Set patches that are visible from block (i, j).
 	// This includes patches visible across world boundary.
+	// See comment about total waste of GPU resources below.
 	function setVisiblePatches(x, y) {
-//		log("x and y are ", x, y);
 		for (var i = 0; i < splitInto; i++) {
 			for (var j = 0; j < splitInto; j++) {
 
-//				logr("patch i, j", i, j);
 				var dist = {
 					x: moduloDist(x, i, splitInto),
 					y: moduloDist(y, j, splitInto)
 				}
-//				logr("distance", dist);
 				var maxDist = Math.max(dist.x, dist.y);
 				if (maxDist <= patchVisibility) {
-//					logr("distance visible cos maxDist", maxDist);
 					terrain[i][j].visible = true;
+					patchDrawCount++;
 				} else {
 					terrain[i][j].visible = false;
 				}
@@ -535,14 +545,68 @@ function draw() {
 
 	setVisiblePatches(currentPatch.x, currentPatch.y);
 
-	renderer.render(scene, camera);
-//	var secondaryRenderOffsetX = terrainN;
+	renderer.autoClear = true;
 
-//	if (secondaryRenderOffsetX !== 0) {
-//		camera.position.x += secondaryRenderOffsetX;
-//		renderer.autoClear = false;
-//		renderer.render(scene, camera);
-//	}
+	function render(clear) {
+		clear = clear || false;
+
+		renderer.autoClear = clear;
+		renderer.render(scene, camera);
+	}
+
+	render(true);
+	var totalPatchDrawCount = patchDrawCount;
+
+	var secondaryRenderOffsetX = 0;
+	var secondaryRenderOffsetY = 0;
+	if (currentPatch.x < patchVisibility)
+		secondaryRenderOffsetX = -terrainN;
+	if (splitInto - currentPatch.x <= patchVisibility)
+		secondaryRenderOffsetX = terrainN;
+	if (currentPatch.y < patchVisibility)
+		secondaryRenderOffsetY = -terrainN;
+	if (splitInto - currentPatch.y <= patchVisibility)
+		secondaryRenderOffsetY = terrainN;
+
+	var cameraPosOrig = camera.position.clone();
+
+	var renderSecondaryX = secondaryRenderOffsetX !== 0;
+	var renderSecondaryY = secondaryRenderOffsetY !== 0;
+
+	// TODO this is wasteful -- at worst, it draws 4 times
+	// as many patches as is needed.
+	// To reduce amount of drawn patches, should call setVisiblePatches()
+	// for each of the following if clauses with suitable options so that
+	// it would select the correct patches to render.
+
+	// Need to render scene again, offset along the x axis?
+	if (renderSecondaryX) {
+		camera.position.copy(cameraPosOrig);
+		camera.position.x -= secondaryRenderOffsetX;
+		render();
+		totalPatchDrawCount += patchDrawCount;
+	}
+
+	// Need to render scene again, offset along the y axis?
+	if (renderSecondaryY) {
+		camera.position.copy(cameraPosOrig);
+		camera.position.z -= secondaryRenderOffsetY;
+		render();
+		totalPatchDrawCount += patchDrawCount;
+	}
+
+	// Need to render scene again, offset along both axes (i.e. we're in the
+	// corner of the world)
+	if (renderSecondaryX && renderSecondaryY) {
+		camera.position.copy(cameraPosOrig);
+		camera.position.x -= secondaryRenderOffsetX;
+		camera.position.z -= secondaryRenderOffsetY;
+		render();
+		totalPatchDrawCount += patchDrawCount;
+	}
+
+	logr('draw: drew ' + totalPatchDrawCount + ' patches.');
+	t.stop();
 }
 
 function frame() {
