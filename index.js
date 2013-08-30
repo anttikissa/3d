@@ -87,7 +87,7 @@ renderer.domElement.focus();
 
 var wireframe = false;
 // How many patches to show around current one
-var patchVisibility = 3;
+var patchVisibility = 1;
 var visualizePatches = true;
 
 
@@ -194,10 +194,15 @@ function convertHeight(orig) {
 // This is the actual image size
 var heightmapSize = 256;
 // This is the part we use from it
-var terrainN = 256;
+var terrainN = 64;
 // Size of patch
 var patchSize = 16;
 var splitInto = terrainN / patchSize;
+
+var shipStartPos = {
+	x: /* terrainN / 2 + */ patchSize / 2,
+	y: terrainN / 2 + patchSize / 2
+}
 
 // x, y are heightmap coordinates
 function getHeight(x, y) {
@@ -217,10 +222,11 @@ function terrainPatch(i, j) {
 	var geometry = new THREE.PlaneGeometry(
 		patchSize, patchSize, patchSize, patchSize);
 
+	// Get the actual X coordinate (in the bigger heightmap)
 	function getHeightmapX(k) {
 		return k % (patchSize + 1) + i * patchSize;
 	}
-	// Get the actual X coordinate (in the bigger heightmap)
+	// Get the actual Y coordinate (in the bigger heightmap)
 	function getHeightmapY(k) {
 		return Math.floor(k / (patchSize + 1)) + j * patchSize;
 	}
@@ -347,8 +353,8 @@ function Ship() {
 
 	ship.groundY = shipGroundY;
 	ship.position.y = shipGroundY + 0.02;
-	ship.position.x = 128;
-	ship.position.z = 128;
+	ship.position.x = shipStartPos.x;
+	ship.position.z = shipStartPos.y;
 	ship.rotation.order = 'YXZ';
 
 	ship.velocity = new THREE.Vector3(0, 0, 0);
@@ -467,24 +473,35 @@ function draw() {
 		y: Math.floor(ship.position.z / patchSize)
 	}
 
-	for (var i = 0; i < splitInto; i++) {
-		for (var j = 0; j < splitInto; j++) {
-			var dist = {
-				x: Math.abs(currentPatch.x - i),
-				y: Math.abs(currentPatch.y - j),
-			}
-			var maxDist = Math.max(dist.x, dist.y);
-			if (maxDist <= patchVisibility) {
-//			var distSquared = dist.x * dist.x + dist.y * dist.y;
-//			if (distSquared <= (patchVisibility * patchVisibility)) {
-				terrain[i][j].visible = true;
-			} else {
-				terrain[i][j].visible = false;
+	// Set patches that are visible from block (i, j).
+	// This includes patches visible across world boundary.
+	function setVisiblePatches(x, y) {
+		for (var i = 0; i < splitInto; i++) {
+			for (var j = 0; j < splitInto; j++) {
+				var dist = {
+					x: Math.abs(x - i),
+					y: Math.abs(y - j),
+				}
+				var maxDist = Math.max(dist.x, dist.y);
+				if (maxDist <= patchVisibility) {
+					terrain[i][j].visible = true;
+				} else {
+					terrain[i][j].visible = false;
+				}
 			}
 		}
 	}
 
+	setVisiblePatches(currentPatch.x, currentPatch.y);
+
 	renderer.render(scene, camera);
+	var secondaryRenderOffsetX = terrainN;
+
+	if (secondaryRenderOffsetX !== 0) {
+		camera.position.x += secondaryRenderOffsetX;
+		renderer.autoClear = false;
+		renderer.render(scene, camera);
+	}
 }
 
 function frame() {
