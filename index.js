@@ -111,6 +111,7 @@ var visualizePatches = true;
 
 
 
+
 //// Keyboard handling
 
 var keyname = require('keyname');
@@ -223,6 +224,13 @@ var shipStartPos = {
 	x: /* terrainN / 2 + */ patchSize / 2,
 	y: /* terrainN / 2 + */ patchSize / 2
 }
+
+// How far is the camera from the ship
+var cameraDistance = 15;
+
+// TODO move into a better place perhaps
+var fogVisibility = patchVisibility * patchSize + cameraDistance;
+scene.fog = new THREE.Fog(0x000000, .8 * fogVisibility, fogVisibility);
 
 // x, y are heightmap coordinates
 function getHeight(x, y) {
@@ -469,7 +477,7 @@ function update() {
 	mouse.update();
 
 	light.position.copy(ship.position);
-	light.position.y += 15;
+	light.position.y += cameraDistance;
 	light.position.x += 0;
 	light.target.position.copy(light.position);
 	light.target.position.y -= 100;
