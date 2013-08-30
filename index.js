@@ -77,6 +77,8 @@ camera.position = { x: -5, y: 5, z: 5 };
 camera.lookAt(scene.position);
 
 document.body.appendChild(renderer.domElement);
+renderer.domElement.focus();
+
 
 
 
@@ -186,51 +188,65 @@ function convertHeight(orig) {
 	return -20 + .08 * orig;
 }
 
-function Plane() {
-	var pt = timer('plane');
-	var n = 256;
-	var smallN = 64;
-	var splitInto = n / smallN;
+// This is the actual image size
+var heightmapN = 256;
+// This is the part we use from it
+var terrainN = 256;
+// tmp just one patch
+var patchN = 64;
+var splitInto = terrainN / patchN;
 
-	var tg = timer('create geometry');
+// x, y are heightmap coordinates
+function getHeight(x, y) {
+	// Eventually, support these
+	if (x < 0)
+		throw Error('x negative: ' + x);
+	if (y < 0)
+		throw Error('y negative: ' + x);
+	x = Math.floor(x);
+	x %= terrainN;
+	y = Math.floor(y);
+	y %= terrainN;
+	return heightData[x + y * heightmapN];
+}
 
-	var geometries = []
+function terrainPatch(i, j) {
+	var geometry = new THREE.PlaneGeometry(
+		patchN, patchN, patchN, patchN);
 
-	for (var i = 0; i < splitInto; i++) {
-		geometries.push([]);
-		for (var j = 0; j < splitInto; j++) {
-			var geometry = new THREE.PlaneGeometry(
-				smallN, smallN, smallN, smallN);
+	function getHeightmapX(k) {
+		return k % (patchN + 1) + i * patchN;
+	}
+	// Get the actual X coordinate (in the bigger heightmap)
+	function getHeightmapY(k) {
+		return Math.floor(k / (patchN + 1)) + j * patchN;
+	}
+	for (var k = 0; k < geometry.vertices.length; k++) {
+		var x = getHeightmapX(k);
+		var y = getHeightmapY(k);
+		var h = getHeight(x, y);
 
-			geometries[i][j] = geometry;
-
-			for (var k = 0; k < geometry.vertices.length; k++) {
-				// TODODODO
-				var y = Math.floor(k / 257);
-				var x = k % 257;
-				// TODO interpolate x and y properly
-				var h = heightData[x + y * 256 ];
-
-				geometry.vertices[k].z += convertHeight(h);
-			}
-		}
+		geometry.vertices[k].z += convertHeight(h);
 	}
 
-	tg.stop();
-
-
-	function getColor(i) {
-		var y = Math.floor(i / 257);
-		var x = i % 257;
-		// TODO interpolate x and y properly
-		var h = heightData[x + y * 256 ];
+	function getColor(k, weight) {
+		var x = getHeightmapX(k);
+		var y = getHeightmapY(k);
+		var h = getHeight(x, y);
 		h *= 0.85;
-		return new THREE.Color((h << 16) + (h << 8) + h);
+		// plain gray
+//		return new THREE.Color((h << 16) + (h << 8) + h);
+		// Make it easier to tell patches apart
+		function normSin(value) { return 0.25 * (Math.sin(9 * value + 5)) + .75; }
+		function normCos(value) { return 0.25 * (Math.cos(4 * value - 99)) + .75; }
+		return new THREE.Color(
+				(Math.floor(normSin(i * j * 5) * h) << 16) + 
+				(Math.floor(normCos(i) * normSin(i + j) * h) << 8) +
+				(Math.floor(normCos(j * 11))) * h);
 	}
 
-	t = timer('figure out colors');
-	for (var i = 0; i < geometry.faces.length; i++) {
-		var face = geometry.faces[i];
+	for (var k = 0; k < geometry.faces.length; k++) {
+		var face = geometry.faces[k];
 
 		face.vertexColors = [
 			getColor(face.a),
@@ -238,19 +254,37 @@ function Plane() {
 			getColor(face.c)
 		]
 	}
-	t.stop();
 
 	var material = new THREE.MeshBasicMaterial(
 		{ wireframe: wireframe,
 		  vertexColors: THREE.VertexColors });
 	var plane = new THREE.Mesh(geometry, material);
+	plane.position.x = (i + 0.5) * patchN;
+	plane.position.z = (j + 0.5) * patchN;
 	plane.rotation.x -= Math.PI / 2;
 	plane.receiveShadow = true;
 
 	scene.add(plane);
 
-	pt.stop();
 	return plane;
+}
+
+function Plane() {
+	var pt = timer('plane');
+
+	var patches = []
+
+	for (var i = 0; i < splitInto; i++) {
+		patches.push([]);
+
+		for (var j = 0; j < splitInto; j++) {
+			var patch = terrainPatch(i, j);
+			patches[i].push(patch);
+		}
+	}
+
+	pt.stop();
+//	return plane;
 }
 
 function Ship() {
@@ -302,8 +336,8 @@ function Ship() {
 
 	ship.groundY = shipGroundY;
 	ship.position.y = shipGroundY + 0.02;
-	ship.position.x = -4;
-	ship.position.z = 4;
+	ship.position.x = 128;
+	ship.position.z = 128;
 	ship.rotation.order = 'YXZ';
 
 	ship.velocity = new THREE.Vector3(0, 0, 0);
@@ -354,16 +388,13 @@ var ShipController = require('./js/ShipController').ShipController;
 var shipController = ShipController(keys, mouse, ship);
 
 function heightAt(x, y) {
-//	console.log('height', x, y);
-	x += 127.5;
 	x = Math.floor(x);
-	x = Math.min(Math.max(0, x), 255);
-	y += 127.5;
+	x = Math.min(Math.max(0, x), 256);
 	y = Math.floor(y);
-	y = Math.min(Math.max(0, y), 255);
+	y = Math.min(Math.max(0, y), 256);
 
-	var h = convertHeight(heightData[y * 256 + x]); 
-//	console.log('height at', x, y, h);
+	var origHeight = getHeight(x, y);
+	var h = convertHeight(origHeight); 
 	return h;
 }
 
