@@ -35,11 +35,11 @@ log(heightData.length);
 
 // x, y are heightmap coordinates
 function getHeight(x, y) {
-	// Eventually, support these
 	if (x < 0)
-		throw Error('x negative: ' + x);
+		x += config.terrainN;
 	if (y < 0)
-		throw Error('y negative: ' + x);
+		y += config.terrainN;
+
 	x = Math.floor(x);
 	x %= config.terrainN;
 	y = Math.floor(y);
@@ -47,7 +47,13 @@ function getHeight(x, y) {
 	return heightData[x + y * config.heightmapSize];
 }
 
+// convert [0.255] to something suitable for playing
+function convertHeight(orig) {
+	return -20 + .08 * orig;
+}
+
 module.exports.getHeightData = getHeightData;
 module.exports.heightData = heightData;
 module.exports.getHeight = getHeight;
+module.exports.convertHeight = convertHeight;
 

@@ -149,11 +149,6 @@ window.onmousedown = function(e) {
 
 //// Objects
 
-// convert [0.255] to something suitable for playing
-function convertHeight(orig) {
-	return -20 + .08 * orig;
-}
-
 // How many patches to show around current one
 // It's assumed that patchVisibility < 0.5 * splitInto
 // (since it makes no sense otherwise)
@@ -194,7 +189,7 @@ function terrainPatch(i, j) {
 		var y = getHeightmapY(k);
 		var h = world.getHeight(x, y);
 
-		geometry.vertices[k].z += convertHeight(h);
+		geometry.vertices[k].z += world.convertHeight(h);
 	}
 
 	function getColor(k, weight) {
@@ -379,7 +374,7 @@ function heightAt(x, y) {
 	y = Math.min(Math.max(0, y), 256);
 
 	var origHeight = world.getHeight(x, y);
-	var h = convertHeight(origHeight); 
+	var h = world.convertHeight(origHeight); 
 	return h;
 }
 
@@ -402,13 +397,34 @@ function update() {
 	shipController.update();
 	particles.update();
 
-	particles.spawn(
-		new THREE.Vector3(Math.random(), 0, Math.random()),
-		new THREE.Vector3(
-			(Math.random() - .5) * .1, .3, (Math.random() - .5) * .1));
-
+/*	if (ship.accelerate) {
+		particles.spawn(
+			new THREE.Vector3(Math.random(), 0, Math.random()),
+			new THREE.Vector3(
+				(Math.random() - .5) * .1, .3, (Math.random() - .5) * .1));
+	} */
+	
 	if (ship.accelerate) {
-		log('accelerate');
+		function spawnParticle() {
+			var particleVelocity = ship.velocity.clone();
+			var particleVelocityRelative = ship.up.clone();
+			particleVelocityRelative.multiplyScalar(-.8);
+			var random = ship.right.clone();
+			random.multiplyScalar(.2 * (Math.random() - 0.5));
+			var random2 = ship.back.clone();
+			random2.multiplyScalar(.2 * (Math.random() - 0.5));
+
+			particleVelocity.add(particleVelocityRelative);
+			particleVelocity.add(random);
+			particleVelocity.add(random2);
+			particles.spawn(
+				ship.position,
+				particleVelocity);
+		}
+		// Looks bad - should randomize start distance
+		for (var i = 0; i < 5; i++) {
+			spawnParticle();
+		}
 	}
 
 	scroll(ship);
