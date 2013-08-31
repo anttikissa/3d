@@ -1,4 +1,5 @@
 var util = require('./util');
+var config = require('./config');
 var log = util.log;
 
 function getHeightData(img) {
@@ -32,6 +33,21 @@ var heightmapImg = document.querySelector('img.heightmap');
 var heightData = getHeightData(heightmapImg);
 log(heightData.length);
 
+// x, y are heightmap coordinates
+function getHeight(x, y) {
+	// Eventually, support these
+	if (x < 0)
+		throw Error('x negative: ' + x);
+	if (y < 0)
+		throw Error('y negative: ' + x);
+	x = Math.floor(x);
+	x %= config.terrainN;
+	y = Math.floor(y);
+	y %= config.terrainN;
+	return heightData[x + y * config.heightmapSize];
+}
+
 module.exports.getHeightData = getHeightData;
 module.exports.heightData = heightData;
+module.exports.getHeight = getHeight;
 

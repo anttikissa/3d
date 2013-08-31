@@ -5,6 +5,7 @@ var frameCount = 0;
 
 var world = require('./js/world');
 var util = require('./js/util');
+var config = require('./js/config');
 var timer = util.timer;
 var log = util.log;
 var logr = util.logr;
@@ -159,18 +160,14 @@ function convertHeight(orig) {
 var patchVisibility = 3;
 var visualizePatches = false;
 
-// This is the actual image size
-var heightmapSize = 256;
-// This is the part we use from it
-var terrainN = 256;
 // Size of patch
 var patchSize = 32;
 // How many patches per world (in one dimension)
-var splitInto = terrainN / patchSize;
+var splitInto = config.terrainN / patchSize;
 
 var shipStartPos = {
-	x: /* terrainN / 2 + */ patchSize / 2,
-	y: /* terrainN / 2 + */ patchSize / 2
+	x: /* config.terrainN / 2 + */ patchSize / 2,
+	y: /* config.terrainN / 2 + */ patchSize / 2
 }
 
 // How far is the camera from the ship
@@ -179,20 +176,6 @@ var cameraDistance = 15;
 // TODO move into a better place perhaps
 var fogVisibility = patchVisibility * patchSize + cameraDistance;
 scene.fog = new THREE.Fog(0x000000, .8 * fogVisibility, fogVisibility);
-
-// x, y are heightmap coordinates
-function getHeight(x, y) {
-	// Eventually, support these
-	if (x < 0)
-		throw Error('x negative: ' + x);
-	if (y < 0)
-		throw Error('y negative: ' + x);
-	x = Math.floor(x);
-	x %= terrainN;
-	y = Math.floor(y);
-	y %= terrainN;
-	return heightData[x + y * heightmapSize];
-}
 
 function terrainPatch(i, j) {
 	var geometry = new THREE.PlaneGeometry(
@@ -209,7 +192,7 @@ function terrainPatch(i, j) {
 	for (var k = 0; k < geometry.vertices.length; k++) {
 		var x = getHeightmapX(k);
 		var y = getHeightmapY(k);
-		var h = getHeight(x, y);
+		var h = world.getHeight(x, y);
 
 		geometry.vertices[k].z += convertHeight(h);
 	}
@@ -217,7 +200,7 @@ function terrainPatch(i, j) {
 	function getColor(k, weight) {
 		var x = getHeightmapX(k);
 		var y = getHeightmapY(k);
-		var h = getHeight(x, y);
+		var h = world.getHeight(x, y);
 		h *= 0.85;
 
 		if (visualizePatches) {
@@ -395,7 +378,7 @@ function heightAt(x, y) {
 	y = Math.floor(y);
 	y = Math.min(Math.max(0, y), 256);
 
-	var origHeight = getHeight(x, y);
+	var origHeight = world.getHeight(x, y);
 	var h = convertHeight(origHeight); 
 	return h;
 }
@@ -403,14 +386,14 @@ function heightAt(x, y) {
 // Wrap objects around the world boundary if necessary
 function scroll(o) {
 	if (o.position.z < 0)
-		o.position.z += terrainN;
+		o.position.z += config.terrainN;
 	else
-		o.position.z = o.position.z % terrainN;
+		o.position.z = o.position.z % config.terrainN;
 
 	if (o.position.x < 0)
-		o.position.x += terrainN;
+		o.position.x += config.terrainN;
 	else
-		o.position.x = o.position.x % terrainN;
+		o.position.x = o.position.x % config.terrainN;
 }
 
 function update() {
@@ -529,13 +512,13 @@ function draw() {
 	var secondaryRenderOffsetX = 0;
 	var secondaryRenderOffsetY = 0;
 	if (currentPatch.x < patchVisibility)
-		secondaryRenderOffsetX = -terrainN;
+		secondaryRenderOffsetX = -config.terrainN;
 	if (splitInto - currentPatch.x <= patchVisibility)
-		secondaryRenderOffsetX = terrainN;
+		secondaryRenderOffsetX = config.terrainN;
 	if (currentPatch.y < patchVisibility)
-		secondaryRenderOffsetY = -terrainN;
+		secondaryRenderOffsetY = -config.terrainN;
 	if (splitInto - currentPatch.y <= patchVisibility)
-		secondaryRenderOffsetY = terrainN;
+		secondaryRenderOffsetY = config.terrainN;
 
 	var cameraPosOrig = camera.position.clone();
 

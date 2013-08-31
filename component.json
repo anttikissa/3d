@@ -14,7 +14,8 @@
 	  "js/ShipController.js",
 	  "js/Particles.js",
 	  "js/world.js",
-	  "js/util.js"
+	  "js/util.js",
+	  "js/config.js"
 	],
   "development": {},
   "license": "MIT"
