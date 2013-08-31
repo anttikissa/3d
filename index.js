@@ -3,66 +3,14 @@
 
 var frameCount = 0;
 
-function log() {
-	console.log.apply(console, arguments);
-}
-
-// Log every two seconds
-// r stands for...  I forgot.  Rarely?
-function logr() {
-	if ((frameCount % 120) === 0) {
-		console.log.apply(console, arguments);
-	}
-}
-
-function timer(what, opts) {
-	opts = opts || {}
-	opts.r = opts.r || false;
-
-	return {
-		startTime: new Date(),
-		stop: function() {
-			var now = new Date();
-			(opts.r ? logr : log)(what + " took " + (now - this.startTime) + " ms");
-		}
-	};
-}
-
-function getHeightData(img) {
-	var t = timer('getHeightData');
-	var s = 256;
-    var canvas = document.createElement( 'canvas' );
-    canvas.width = s;
-    canvas.height = s;
-    var context = canvas.getContext( '2d' );
-
-    var size = s * s, data = new Float32Array( size );
-
-    context.drawImage(img,0,0);
-
-    for ( var i = 0; i < size; i ++ ) {
-        data[i] = 0
-    }
-
-    var imgd = context.getImageData(0, 0, s, s);
-    var pix = imgd.data;
-
-    var j=0;
-    for (var i = 0, n = pix.length; i < n; i += (4)) {
-        var all = pix[i]+pix[i+1]+pix[i+2];
-        data[j++] = all/3;
-    }
-
-	t.stop();
-
-    return data;
-}
-
-var heightmapImg = document.querySelector('img.heightmap');
-var heightData = getHeightData(heightmapImg);
-log(heightData.length);
+var world = require('./js/world');
+var util = require('./js/util');
+var timer = util.timer;
+var log = util.log;
+var logr = util.log;
 
 
+var heightData = world.heightData;
 
 //// Pointer lock - works in Chrome
 
@@ -467,7 +415,7 @@ function scroll(o) {
 }
 
 function update() {
-	frameCount++;
+	util.frameCount++;
 
 	shipController.update();
 	particles.update();

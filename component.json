@@ -9,7 +9,13 @@
     "cvdlab/three": "*"
   },
   "main": "index.js",
-  "scripts": ["index.js", "js/ShipController.js", "js/Particles.js"],
+  "scripts": [
+	  "index.js",
+	  "js/ShipController.js",
+	  "js/Particles.js",
+	  "js/world.js",
+	  "js/util.js"
+	],
   "development": {},
   "license": "MIT"
 }
