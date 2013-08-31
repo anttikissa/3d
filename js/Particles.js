@@ -20,7 +20,10 @@ function Particles(scene) {
 		var pY = Math.random() * 10;
 		var pZ = Math.random() * 10;
 		var particle = new THREE.Vector3(pX, pY, pZ);
-		particle.velocity = new THREE.Vector3(0, -Math.random(), 0);
+		particle.velocity = new THREE.Vector3(
+			.3 * (Math.random() - .5),
+			.1 * (0.5 + Math.random()),
+			.3 * (Math.random() - .5));
 
 		this.particles.vertices.push(particle);
 	}
@@ -35,12 +38,13 @@ function Particles(scene) {
 Particles.prototype.update = function() {
 	for (var i = 0; i < particleCount; i++) {
 		var p = this.particles.vertices[i];
-		if (p.y < 0)
+		if (p.y < 0) {
 			p.y = 0;
-		p.y -= Math.random() * 0.1;
+			p.velocity.multiply({ x: .8, y: -.8, z: .8 });
+		}
+		p.velocity.y -= 0.01;
 		p.add(p.velocity);
 	}
-//	this.system.position.y += 0.1;
 	this.particles.verticesNeedUpdate = true;
 };
 
