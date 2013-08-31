@@ -7,8 +7,7 @@ var world = require('./js/world');
 var util = require('./js/util');
 var timer = util.timer;
 var log = util.log;
-var logr = util.log;
-
+var logr = util.logr;
 
 var heightData = world.heightData;
 
