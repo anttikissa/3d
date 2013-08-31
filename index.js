@@ -436,11 +436,11 @@ var light = Light();
 
 
 
-//// Camera
-
 var ShipController = require('./js/ShipController').ShipController;
-
 var shipController = ShipController(keys, mouse, ship);
+
+var Particles = require('./js/Particles').Particles;
+var particles = new Particles(scene);
 
 function heightAt(x, y) {
 	x = Math.floor(x);
@@ -470,6 +470,12 @@ function update() {
 	frameCount++;
 
 	shipController.update();
+	particles.update();
+
+	if (ship.accelerate) {
+		log('accelerate');
+	}
+
 	scroll(ship);
 
 	// Handle ship-ground collision

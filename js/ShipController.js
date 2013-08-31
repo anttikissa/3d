@@ -51,8 +51,8 @@ ShipController.prototype.update = function() {
 		ship.up = new THREE.Vector3(els[4], els[5], els[6]);
 		ship.back = new THREE.Vector3(els[8], els[9], els[10]);
 
+		ship.accelerate = keys.space;
 		if (keys.space) {
-			// untested
 			var thrust = ship.up.clone();
 			thrust.multiplyScalar(accel);
 			ship.velocity.add(thrust);
@@ -67,5 +67,5 @@ ShipController.prototype.update = function() {
 	updatePhysics();
 };
 
-exports.ShipController = ShipController;
+module.exports.ShipController = ShipController;
 
