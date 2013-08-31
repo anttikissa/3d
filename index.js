@@ -402,6 +402,11 @@ function update() {
 	shipController.update();
 	particles.update();
 
+	particles.spawn(
+		new THREE.Vector3(Math.random(), 0, Math.random()),
+		new THREE.Vector3(
+			(Math.random() - .5) * .1, .3, (Math.random() - .5) * .1));
+
 	if (ship.accelerate) {
 		log('accelerate');
 	}

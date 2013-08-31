@@ -1,6 +1,9 @@
 var THREE = require('three');
 
 var particleCount = 100;
+var current = 0;
+// frames
+var deathAge = 100;
 
 function Particles(scene) {
 	this.scene = scene;
@@ -11,20 +14,14 @@ function Particles(scene) {
 
 	this.particles = new THREE.Geometry(),
 	this.material = new THREE.ParticleBasicMaterial({
-		color: 0xFFFFFF,
+		color: 0xffffff,
 		size: 0.4
 	});
 
 	for (var p = 0; p < particleCount; p++) {
-		var pX = Math.random() * 10;
-		var pY = Math.random() * 10;
-		var pZ = Math.random() * 10;
-		var particle = new THREE.Vector3(pX, pY, pZ);
-		particle.velocity = new THREE.Vector3(
-			.3 * (Math.random() - .5),
-			.1 * (0.5 + Math.random()),
-			.3 * (Math.random() - .5));
-
+		var particle = new THREE.Vector3(0, 0, 0);
+		particle.velocity = new THREE.Vector3(0, 0, 0);
+		particle.age = 0;
 		this.particles.vertices.push(particle);
 	}
 
@@ -38,6 +35,11 @@ function Particles(scene) {
 Particles.prototype.update = function() {
 	for (var i = 0; i < particleCount; i++) {
 		var p = this.particles.vertices[i];
+		if (p.age++ >= deathAge) {
+			p.z = 1000;
+			continue;
+		}
+
 		if (p.y < 0) {
 			p.y = 0;
 			p.velocity.multiply({ x: .8, y: -.8, z: .8 });
@@ -46,6 +48,17 @@ Particles.prototype.update = function() {
 		p.add(p.velocity);
 	}
 	this.particles.verticesNeedUpdate = true;
+};
+
+Particles.prototype.spawn = function(location, velocity) {
+	var location = location || { x: 0, y: 0, z: 0 };
+	var velocity = velocity || { x: 0, y: 0, z: 0 };
+	var p = this.particles.vertices[current++];
+	current = current % particleCount;
+
+	p.copy(location);
+	p.velocity.copy(velocity);
+	p.age = 0;
 };
 
 module.exports.Particles = Particles;
