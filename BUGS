@@ -2,14 +2,16 @@
 Importance:
 
 1 - needed to make playing fun
-2 - needed to make playing easier
-3 - annoying things
+2 - annoying things
+3 - needed to make playing easier
 4 - cosmetic things
 
 Bugs:
 
 0 Development isn't fun any more
   - make reloading code / testing changes instantaneous 
+
+1 Sounds are missing
 
 1 Can't shoot no bullets.
 
@@ -22,9 +24,11 @@ when you're flying high.
 
 1 Water might be fun.
 
-2 Hovering and landing need some autopilot magic.
+2 Camera breaks when too much down/up.  Also q/e.
 
-3 You can't really restart the game.
+2 You can't really restart the game.
+
+3 Hovering and landing need some autopilot magic.
 
 4 Tweak land colors, etc.
 
