@@ -1,0 +1,7 @@
+#!/usr/bin/env coffee
+
+fs = require 'fs'
+
+fs.stat 'build/build.js', (err, result) ->
+	size = result.size
+	console.log "build.js: #{size} bytes"

@@ -1,0 +1,19 @@
+#!/usr/bin/env coffee
+
+# Which day of development is it?
+
+now = new Date()
+firstCommit = new Date('Sun Aug 25 00:00:00 2013 +0300')
+
+day = 1000 * 60 * 60 * 24
+
+days = Math.floor (now - firstCommit) / day
+
+# Now it's counting from 0 onwards.
+
+days++
+
+# That's better
+
+console.log "It's day #{days} of development."
+
