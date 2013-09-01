@@ -10,6 +10,7 @@ Bugs:
 
 0 Development isn't fun any more
   - make reloading code / testing changes instantaneous 
+  - make it less GPU-hoggy optionally (i.e. just draw fewer polygons)
 
 1 Sounds are missing
 
