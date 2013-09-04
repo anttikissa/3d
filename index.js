@@ -14,7 +14,9 @@ var heightData = world.heightData;
 
 //// Pointer lock - works in Chrome
 
+// Removed for lighttable
 function lockPointer() {
+	return;
 	var el = document.body;
 	el.requestPointerLock = el.requestPointerLock || el.webkitRequestPointerLock;
 	document.body.requestPointerLock();
@@ -30,7 +32,7 @@ var width = window.innerWidth - 20;
 var height = window.innerHeight - 20;
 
 var scene = new THREE.Scene();
-var renderer = new THREE.WebGLRenderer(); 
+var renderer = new THREE.WebGLRenderer();
 
 renderer.shadowMapEnabled = true;
 renderer.setSize(width, height);
@@ -206,7 +208,7 @@ function terrainPatch(i, j) {
 				return 0.25 * (Math.cos(4 * value - 99)) + .75;
 			}
 			return new THREE.Color(
-				(Math.floor(normSin(i * j * 5) * h) << 16) + 
+				(Math.floor(normSin(i * j * 5) * h) << 16) +
 				(Math.floor(normCos(i) * normSin(i + j) * h) << 8) +
 				(Math.floor(normCos(j * 11))) * h);
 		}
@@ -300,8 +302,8 @@ function Ship() {
 	var material = new THREE.MeshPhongMaterial({
 		color: 0xffffff, wireframe: wireframe
 		// uncomment for transparency
-/*		, opacity: 0.5, 
-		transparent: true, 
+/*		, opacity: 0.5,
+		transparent: true,
 		depthWrite: true */
 	});
 
@@ -374,7 +376,7 @@ function heightAt(x, y) {
 	y = Math.min(Math.max(0, y), 256);
 
 	var origHeight = world.getHeight(x, y);
-	var h = world.convertHeight(origHeight); 
+	var h = world.convertHeight(origHeight);
 	return h;
 }
 
@@ -403,7 +405,7 @@ function update() {
 			new THREE.Vector3(
 				(Math.random() - .5) * .1, .3, (Math.random() - .5) * .1));
 	} */
-	
+
 	if (ship.accelerate) {
 		function spawnParticle() {
 			var particleVelocity = ship.velocity.clone();
@@ -422,7 +424,7 @@ function update() {
 				particleVelocity);
 		}
 		// Looks bad - should randomize start distance
-		for (var i = 0; i < 5; i++) {
+		for (var i = 0; i < 6; i++) {
 			spawnParticle();
 		}
 	}
@@ -578,7 +580,7 @@ function draw() {
 		totalPatchDrawCount += patchDrawCount;
 	}
 
-	logr('draw: drew ' + totalPatchDrawCount + ' patches.');
+//	logr('draw: drew ' + totalPatchDrawCount + ' patches.');
 	t.stop();
 }
 

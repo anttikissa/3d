@@ -1,11 +1,12 @@
 var THREE = require('three');
 var log = require('./util').log;
+var logr = require('./util').logr;
 var world = require('./world');
 
-var particleCount = 100;
+var particleCount = 200;
 var current = 0;
 // frames
-var deathAge = 2000;
+var deathAge = 60;
 
 function Particles(scene) {
 	this.scene = scene;
@@ -16,8 +17,10 @@ function Particles(scene) {
 
 	this.particles = new THREE.Geometry(),
 	this.material = new THREE.ParticleBasicMaterial({
-		color: 0xffffff,
-		size: 0.4
+		color: 0xaaaaaa,
+		size: 0.10,
+		blending: THREE.AdditiveBlending,
+		transparent: true
 	});
 
 	for (var p = 0; p < particleCount; p++) {
@@ -37,7 +40,12 @@ function Particles(scene) {
 Particles.prototype.update = function() {
 	for (var i = 0; i < particleCount; i++) {
 		var p = this.particles.vertices[i];
+//		logr('check particle', i, 'of', particleCount, 'its age', p.age); 
+//		if (p.age === deathAge - 1) {
+//			log('KILLING IT');
+//		}
 		if (p.age++ >= deathAge) {
+			p.age = deathAge;
 			p.z = 1000;
 			continue;
 		}
@@ -46,7 +54,7 @@ Particles.prototype.update = function() {
 //		log('height(' + p.x + ', ' + p.z + ' is', h);
 		if (p.y < h) {
 			p.y = h;
-			p.velocity.multiply({ x: .8, y: -.8, z: .8 });
+			p.velocity.multiply({ x: .4, y: -.4, z: .4 });
 		}
 		p.velocity.y -= 0.01;
 		p.add(p.velocity);

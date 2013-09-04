@@ -16,6 +16,8 @@ Bugs:
 
 1 Can't shoot no bullets.
 
+1 Turning with Q/E should work like you expect after you've turned with UP/DOWN
+
 1 There are no enemies.
 
 1 You can't see the fuel trails and it's difficult to see where you're moving
@@ -25,7 +27,7 @@ when you're flying high.
 
 1 Water might be fun.
 
-2 Camera breaks when too much down/up.  Also q/e.
+2 Camera breaks when turning too much UP/DOWN.  Also when with Q/E, in a different way though.
 
 2 You can't really restart the game.
 

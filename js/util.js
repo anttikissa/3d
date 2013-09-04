@@ -8,7 +8,7 @@ function log() {
 // Log every two seconds
 // r stands for...  I forgot.  Rarely?
 function logr() {
-	if ((module.exports.frameCount % 120) === 0) {
+	if ((module.exports.frameCount % 40) === 0) {
 		console.log.apply(console, arguments);
 	}
 }
