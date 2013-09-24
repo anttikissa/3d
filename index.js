@@ -164,7 +164,7 @@ var splitInto = config.terrainN / patchSize;
 
 var shipStartPos = {
 	x: /* config.terrainN / 2 + */ patchSize / 2,
-	y: /* config.terrainN / 2 + */ patchSize / 2
+	y: /* config.terrainN / 2 + */ patchSize / 2 + 10
 }
 
 // How far is the camera from the ship
